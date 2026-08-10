@@ -1,0 +1,11 @@
+# nix-darwin build outputs
+result
+
+# editor/backup files
+*.bak
+*.bak[0-9]
+*~
+\#*\#
+
+# sensitive / local-only
+.DS_Store
