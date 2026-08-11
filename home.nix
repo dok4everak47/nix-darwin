@@ -1,5 +1,5 @@
 {
-  config, pkgs, inputs, ...  # `inputs` via extraSpecialArgs
+  config, pkgs, inputs, unstable, ...  # via extraSpecialArgs
 }:
 
 {
@@ -13,6 +13,9 @@
   # CLI tools moved here from systemPackages (2026-08).
   home.packages = [
     pkgs.fzf
+    # atuin from unstable: stable 26.05 (18.15.2) predates the 2026-07-09
+    # "shell" migration in the existing history.db.
+    (unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.atuin)
   ];
 
   # ── Zsh (HM overwrites ~/.zshrc; old content migrated here) ─────────
@@ -117,6 +120,7 @@
   programs.atuin = {
     enable = true;
     enableZshIntegration = true;
+    package = unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.atuin;
   };
 
   # ── direnv (darwin-level already enables programs.direnv; this adds

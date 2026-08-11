@@ -9,9 +9,11 @@
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    # atuin needs >= 18.16 (2026-07-09 "shell" migration); stable 26.05 only has 18.15.2.
+    unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
 
-  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager }:
+  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager, unstable }:
   {
     # Build darwin flake using:
     # $ darwin-rebuild switch --flake .#dok4ever-mac
@@ -36,7 +38,7 @@
           home-manager.useUserPackages = true;
           home-manager.backupFileExtension = "hm-backup";
           # Pass `inputs` to home-manager modules too.
-          home-manager.extraSpecialArgs = { inherit inputs; };
+          home-manager.extraSpecialArgs = { inherit inputs unstable; };
           home-manager.users.dok4ever = import ./home.nix;
         }
       ];
