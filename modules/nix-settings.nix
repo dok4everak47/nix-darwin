@@ -4,17 +4,18 @@
   # Necessary for using flakes on this system.
   nix.settings.experimental-features = "nix-command flakes";
 
-  # Allow dok4ever to specify trusted-public-keys (needed for USTC cache).
+  # Allow dok4ever to specify trusted-public-keys (needed for mirror cache).
   nix.settings.trusted-users = [ "root" "dok4ever" ];
 
-  # ── Binary cache: USTC mirror (faster in CN than cache.nixos.org) ──
-  # Keys from https://mirrors.ustc.edu.cn/nix-channels/store
+  # ── Binary cache: SJTUG Siyuan mirror (faster in CN than cache.nixos.org) ──
+  # https://help.mirrors.cernet.edu.cn/nix-channels/?mirror=SJTUG-Siyuan
+  # SJTUG mirrors cache.nixos.org, same trusted key applies.
   nix.settings.substituters = [
-    "https://mirrors.ustc.edu.cn/nix-channels/store"
+    "https://mirror.sjtu.edu.cn/nix-channels/store"
     "https://cache.nixos.org"
   ];
   nix.settings.trusted-public-keys = [
-    "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjU="
+    "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
   ];
 
   # ── Auto GC: keep /nix/store bounded (encrypted APFS volume is small) ──
