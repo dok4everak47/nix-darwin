@@ -19,7 +19,7 @@
     pkgs.neomutt
     pkgs.isync
     pkgs.yazi
-    pkgs.emacs # Emacs (2026-08 nix 安装, 替代 emacsformacosx)
+    (pkgs.emacs.override { withXwidgets = true; withXinput2 = true; }) # Emacs 30 + xwidget-webkit (内嵌浏览器, 跑 CSS/JS)
     pkgs.fd
     pkgs.imagemagick
     pkgs.nmap
