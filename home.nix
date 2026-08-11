@@ -86,7 +86,8 @@
       # ── antidote (zsh plugin manager) ──────────────────────────────
       # Cache moved out of ~/Library/Caches to survive cleanup tools
       zstyle ':antidote:home' dir "$HOME/.local/share/antidote"
-      source $(brew --prefix)/opt/antidote/share/antidote/antidote.zsh
+      # source $(brew --prefix) 在 nix 环境 PATH 无 brew 会报错, 写死绝对路径
+      source /opt/homebrew/opt/antidote/share/antidote/antidote.zsh
 
       # Rebuild if bundle is stale OR cache directory was cleaned
       if [[ ! ~/.zsh_plugins.zsh -nt ~/.zsh_plugins.txt ]] || [[ ! -d "$HOME/.local/share/antidote" ]]; then
