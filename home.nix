@@ -133,14 +133,6 @@
     nix-direnv.enable = true;
   };
 
-  # Silence direnv info logs (loading/export messages) via config.toml —
-  # plain text write, no remarshal/python deps. Do NOT use
-  # programs.direnv.settings (pulls in remarshal + 100+ python packages).
-  xdg.configFile."direnv/config.toml".text = ''
-    [global]
-    log_format = ""
-  '';
-
   # ── fzf ─────────────────────────────────────────────────────────────
   programs.fzf = {
     enable = true;
