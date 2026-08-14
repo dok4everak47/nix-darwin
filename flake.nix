@@ -10,7 +10,10 @@
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     # atuin needs >= 18.16 (2026-07-09 "shell" migration); stable 26.05 only has 18.15.2.
-    unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    # Pin to rev 6f6fca05 = atuin 18.17.1 (last version before 18.18's
+    # "duplicate column: shell" migration bug on an already-migrated db).
+    # 18.17.1 is patched for search bug #3908 in home.nix.
+    unstable.url = "github:NixOS/nixpkgs/6f6fca055bb8d39ccd3e3be1e27d8b58b9a442d1";
   };
 
   outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager, unstable }:

@@ -24,4 +24,11 @@
     pkgs.imagemagick
     pkgs.nmap
   ];
+
+  # ── LANG (2026-08-14) ────────────────────────────────────────────────
+  # macOS 系统 locale 是 en_CN (无效); Emacs NS 端口在 LANG 未设置时
+  # 从系统读 locale → 启动警告 "LANG=en_CN.UTF-8 cannot be used"。
+  # environment.variables 写入 launchd 环境, GUI 应用 (Dock 启动的 Emacs)
+  # 都需要这里显式设置; 终端 shell 的 LANG 在 home.nix envExtra 里。
+  environment.variables.LANG = "en_US.UTF-8";
 }

@@ -2,7 +2,17 @@
   config, pkgs, inputs, unstable, ...  # via extraSpecialArgs
 }:
 
+let
+  # atuin 18.17+ search bug (#3908): `allow_hyphen_values` on the variadic
+  # query swallows flags written AFTER the query (e.g. `atuin search git
+  # --cmd-only` treats `--cmd-only` as a search term). Patch removes it;
+  # hyphen-prefixed queries now need an explicit `--` separator.
+  atuin = (unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.atuin).overrideAttrs (old: {
+    patches = (old.patches or []) ++ [ ./atuin-fix-search-hyphen.patch ];
+  });
+in
 {
+
   home.username = "dok4ever";
   home.homeDirectory = "/Users/dok4ever";
   home.stateVersion = "26.05";  # Matches HM release-26.05 branch
@@ -14,8 +24,8 @@
   home.packages = [
     pkgs.fzf
     # atuin from unstable: stable 26.05 (18.15.2) predates the 2026-07-09
-    # "shell" migration in the existing history.db.
-    (unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.atuin)
+    # "shell" migration in the existing history.db. Patched for #3908.
+    atuin
   ];
 
   # ── Zsh (HM overwrites ~/.zshrc; old content migrated here) ─────────
@@ -45,6 +55,12 @@
 
     # Environment variables (proxy, PATH, etc.)
     envExtra = ''
+      # ── LANG (2026-08-14) ──────────────────────────────────────────
+      # macOS 系统 locale 是 en_CN (无效); Emacs NS 端口在 LANG 未设置时
+      # 从系统读 locale → 启动警告 "LANG=en_CN.UTF-8 cannot be used"。
+      # 终端里启动的 emacs 需要这里显式设置。
+      export LANG=en_US.UTF-8
+
       # ── Proxy (ClashX 7890) ─────────────────────────────────────────
       export http_proxy=http://127.0.0.1:7890
       export https_proxy=http://127.0.0.1:7890
@@ -122,7 +138,7 @@
   programs.atuin = {
     enable = true;
     enableZshIntegration = true;
-    package = unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.atuin;
+    package = atuin;
   };
 
   # ── direnv (darwin-level already enables programs.direnv; this adds
