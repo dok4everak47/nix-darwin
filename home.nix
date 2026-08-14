@@ -61,6 +61,11 @@ in
       # 终端里启动的 emacs 需要这里显式设置。
       export LANG=en_US.UTF-8
 
+      # ── Default editor ─────────────────────────────────────────────
+      export EDITOR="emacs -nw"
+      export VISUAL="emacs -nw"
+      export GIT_EDITOR="emacs -nw"
+
       # ── Proxy (ClashX 7890) ─────────────────────────────────────────
       export http_proxy=http://127.0.0.1:7890
       export https_proxy=http://127.0.0.1:7890
