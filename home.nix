@@ -38,7 +38,8 @@ in
     # Aliases migrated from .zshrc
     shellAliases = {
       ls = "eza";
-      ll = "eza -lah";
+      # ll = "eza -lah";
+      ll = "eza -lah --classify --sort=type";
       la = "eza -a";
       tree = "eza --tree";
       "-" = "cd -";
