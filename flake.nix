@@ -31,6 +31,7 @@
         ./modules/system-packages.nix
         ./modules/nix-settings.nix
         ./modules/activation.nix
+        ./modules/ssh-config-fix.nix
 
         # Set Git commit hash for darwin-version (needs `self`, so lives here).
         { system.configurationRevision = self.rev or self.dirtyRev or null; }
