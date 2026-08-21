@@ -14,9 +14,15 @@
     # "duplicate column: shell" migration bug on an already-migrated db).
     # 18.17.1 is patched for search bug #3908 in home.nix.
     unstable.url = "github:NixOS/nixpkgs/6f6fca055bb8d39ccd3e3be1e27d8b58b9a442d1";
+
+    # fetch (animated 3D fetch tool) -- https://github.com/areofyl/fetch
+    # Pinned to rev 5297ad4 (HEAD as of 2026-08-21). Upstream flake uses
+    # nixos-unstable; follow our nixpkgs to avoid pulling a second copy.
+    areofyl-fetch.url = "github:areofyl/fetch/5297ad46acf2afb676ddc56aa8f278bd591fb9e6";
+    areofyl-fetch.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager, unstable }:
+  outputs = inputs@{ self, nix-darwin, nixpkgs, home-manager, unstable, areofyl-fetch }:
   {
     # Build darwin flake using:
     # $ darwin-rebuild switch --flake .#dok4ever-mac

@@ -13,6 +13,10 @@ let
 in
 {
 
+  # ── fetch home-manager module (from areofyl-fetch flake input) ─────────
+  # https://github.com/areofyl/fetch/tree/main/nix
+  imports = [ inputs.areofyl-fetch.homeManagerModules.default ];
+
   home.username = "dok4ever";
   home.homeDirectory = "/Users/dok4ever";
   home.stateVersion = "26.05";  # Matches HM release-26.05 branch
@@ -63,9 +67,9 @@ in
       export LANG=en_US.UTF-8
 
       # ── Default editor ─────────────────────────────────────────────
-      export EDITOR="emacs -nw"
-      export VISUAL="emacs -nw"
-      export GIT_EDITOR="emacs -nw"
+      export EDITOR="nvim"
+      export VISUAL="nvim"
+      export GIT_EDITOR="nvim"
 
       # ── Proxy (ClashX 7890) ─────────────────────────────────────────
       export http_proxy=http://127.0.0.1:7890
@@ -125,6 +129,15 @@ in
 
       # bun completions
       [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
+
+      # dsh update
+      dsh-update() {
+      cd /Users/dok4ever/Project/deepseek-harness || return 1
+      git pull &&
+      pnpm install &&
+      pnpm run build &&
+      dsh --version
+}
     '';
   };
 
@@ -159,5 +172,42 @@ in
   programs.fzf = {
     enable = true;
     enableZshIntegration = true;
+  };
+
+  # ── fetch (animated 3D fetch tool) ─────────────────────────────────
+  # Replaces `eval "$(fetch init)"`-style manual config; the HM module
+  # builds fetch from source and writes ~/.config/fetch/config.
+  # Options: https://github.com/areofyl/fetch/blob/main/nix/README.md
+  #
+  # info 字段取舍 (2026-08-21, 实测 aarch64-darwin):
+  #   有数据: os host kernel uptime packages shell wm theme icons
+  #          terminal cpu memory disk ip battery colors
+  #   macOS 上取不到 (gather_* 返回空, 不列入):
+  #          display font cursor gpu swap locale
+  #        - gpu 空: package.nix 只给 Linux 加 pciutils(lspci), mac 无
+  #        - swap/locale 等: gather_* 在 darwin 上无对应实现
+  programs.fetch = {
+    enable = true;
+    labelColor = "magenta";
+    info = [
+      "os"
+      "host"
+      "kernel"
+      "uptime"
+      "packages"
+      "shell"
+      "wm"
+      "theme"
+      "icons"
+      "terminal"
+      "cpu"
+      "memory"
+      "disk"
+      "ip"
+      "battery"
+      "colors"
+    ];
+    spin = "xy";
+    speed = 1.0;
   };
 }
