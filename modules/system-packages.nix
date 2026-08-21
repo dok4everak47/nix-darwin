@@ -19,10 +19,23 @@
     pkgs.neomutt
     pkgs.isync
     pkgs.yazi
-    (pkgs.emacs.override { withXwidgets = true; withXinput2 = true; }) # Emacs 30 + xwidget-webkit (内嵌浏览器, 跑 CSS/JS)
+    (pkgs.emacs.override {
+      withXwidgets = true;
+      withXinput2 = true;
+    }) # Emacs 30 + xwidget-webkit (内嵌浏览器, 跑 CSS/JS)
     pkgs.fd
     pkgs.imagemagick
     pkgs.nmap
+    pkgs.tmux
+    pkgs.nil
+    pkgs.alejandra
+    pkgs.ghostty-bin
+    pkgs.zed-editor
+    pkgs.mdcat
+    # NOTE: ghostty 在 nixpkgs (26.05 / unstable 6f6fca0) 的 meta.platforms 仅
+    # 列 Linux,aarch64-darwin 上求值会直接报 "not available on the requested
+    # hostPlatform"。macOS 走 Homebrew Cask 安装官方 .app:
+    #   brew install --cask ghostty
   ];
 
   # ── LANG (2026-08-14) ────────────────────────────────────────────────
