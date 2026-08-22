@@ -40,9 +40,10 @@
     ];
 
     onActivation = {
-      # Phase 1: converge installs without removing anything. Flip to
-      # "uninstall" after verifying the box for a few days.
-      cleanup = "none";
+      # Phase 2: uninstall any Homebrew package (formula/cask/tap) not
+      # declared above, so the brew prefix converges to the config.
+      # Use "zap" instead if you also want cask prefs/caches removed.
+      cleanup = "uninstall";
       autoUpdate = false;
       upgrade = false;
     };
