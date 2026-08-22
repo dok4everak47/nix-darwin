@@ -40,12 +40,16 @@
     ];
 
     onActivation = {
-      # Phase 2: uninstall any Homebrew package (formula/cask/tap) not
-      # declared above, so the brew prefix converges to the config.
-      # Use "zap" instead if you also want cask prefs/caches removed.
+      # Uninstall any Homebrew package not declared above, so the brew
+      # prefix converges to the config. Use "zap" to also purge cask
+      # prefs/caches.
       cleanup = "uninstall";
-      autoUpdate = false;
-      upgrade = false;
+      # Personal, single-user machine: also refresh formulae metadata and
+      # upgrade declared packages during rebuild, so `darwin-rebuild switch`
+      # is the one command for both config and brew updates. Trades strict
+      # idempotence/reproducibility for convenience (fine on a laptop).
+      autoUpdate = true;
+      upgrade = true;
     };
 
     global = {
