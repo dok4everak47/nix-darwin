@@ -30,6 +30,10 @@
   # 2026-08: starship init 通过 programs.zsh.promptInit 接入；fzf/atuin
   # 安装在 modules/shell.nix；direnv 由 programs.direnv.enable 自动提供;
   # taskwarrior3/taskwarrior-tui/vit 已迁移 htask, 遗留已删。
+  #
+  # Homebrew takeover (2026-08): CLI tools migrated here from brew.
+  # ffmpeg-full / imagemagick-full stay on Homebrew (full feature set),
+  # managed in modules/homebrew.nix and prioritized in shell.nix PATH.
   environment.systemPackages = [
     pkgs.vim
     pkgs.neovim
@@ -45,10 +49,8 @@
     (pkgs.emacs.override {
       withXwidgets = true;
       withXinput2 = true;
-    }) # Emacs 30 + xwidget-webkit (内嵌浏览器, 跑 CSS/JS)
+    }) # Emacs 30 + xwidget-webkit (内嵌浏览器, 跑 CSS/JS); GUI at /Applications/Nix Apps/Emacs.app
     pkgs.fd
-    pkgs.zoxide
-    pkgs.imagemagick
     pkgs.nmap
     pkgs.tmux
     pkgs.nil
@@ -57,10 +59,20 @@
     pkgs.zed-editor
     pkgs.mdcat
     pkgs.opencode
-    # NOTE: ghostty 在 nixpkgs (26.05 / unstable 6f6fca0) 的 meta.platforms 仅
-    # 列 Linux,aarch64-darwin 上求值会直接报 "not available on the requested
-    # hostPlatform"。macOS 走 Homebrew Cask 安装官方 .app:
-    #   brew install --cask ghostty
+
+    # ── Migrated from Homebrew ────────────────────────────────────────
+    pkgs.antidote   # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
+    pkgs.cmake
+    pkgs.delta      # git-delta
+    pkgs.jq
+    pkgs.lazygit
+    pkgs.nb
+    pkgs.ntfy
+    pkgs.poppler-utils  # pdftotext, pdfinfo, ... (poppler is the GLib lib)
+    pkgs.resvg
+    pkgs.ripgrep
+    pkgs._7zz       # 7-Zip CLI (binary is `7zz`; replaces brew sevenzip)
+    pkgs.socat
   ];
 
   # ── LANG (2026-08-14) ────────────────────────────────────────────────

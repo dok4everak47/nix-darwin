@@ -66,13 +66,15 @@ in
   # ── PATH additions ───────────────────────────────────────────────────
   # NOTE: cannot use `environment.variables.PATH = [ ... ]` because nix-darwin
   # REPLACES PATH wholesale, dropping /usr/bin:/bin:/usr/sbin:/sbin (this
-  # broke `tr`, `mv`, `uname`, `mkdir`, ... on 2026-08-22). HM used
-  # `export PATH="...:$PATH"` in zsh.envExtra which *appends*; replicate
-  # that here. shellInit runs in /etc/zshenv for every shell (login +
-  # interactive + scripts), matching HM envExtra semantics.
-  programs.zsh.shellInit = ''
-    export PATH="/Library/TeX/texbin:/usr/local/texlive/2026basic/bin/universal-darwin:$HOME/.local/bin:$HOME/bin:$PATH"
-  '';
+  # broke `tr`, `mv`, `uname`, `mkdir`, ... on 2026-08-22).
+  #
+  # PATH ordering is finalized inside `interactiveShellInit` (NOT here):
+  # `~/.zprofile` runs `brew shellenv`, which prepends /opt/homebrew/bin
+  # AFTER /etc/zshenv, so anything set here would get pushed behind it.
+  # /etc/zshrc (interactiveShellInit) runs after ~/.zprofile/~/.zshrc, so
+  # that is where we re-assert the intended order. `shellInit` is left
+  # intact for any non-interactive zsh that still inherits the launchd PATH.
+  programs.zsh.shellInit = '''';
 
   # ── User packages that lived in home.packages under HM ──────────────
   environment.systemPackages = [
@@ -91,6 +93,32 @@ in
   # nix-darwin sources this in /etc/zshrc AFTER compinit setup; it runs
   # before the user's ~/.zshrc.
   programs.zsh.interactiveShellInit = ''
+    # ── Finalize PATH after ~/.zprofile (which runs `brew shellenv`) ─
+    # Order matters:
+    #   1. keg-only Homebrew full builds (ffmpeg-full / imagemagick-full)
+    #      must beat both nixpkgs and any regular brew ffmpeg/magick.
+    #   2. Nix system profile — migrated CLI tools live here and must beat
+    #      /opt/homebrew/bin so the nixpkgs copies are authoritative.
+    #   3. TeX, user bins, then /opt/homebrew/bin as a fallback.
+    #   4. macOS system paths are preserved (never wholesale-replace PATH).
+    typeset -U path
+    path=(
+      /opt/homebrew/opt/ffmpeg-full/bin
+      /opt/homebrew/opt/imagemagick-full/bin
+      /run/current-system/sw/bin
+      /nix/var/nix/profiles/default/bin
+      $HOME/.nix-profile/bin
+      /Library/TeX/texbin
+      /usr/local/texlive/2026basic/bin/universal-darwin
+      $HOME/.local/bin
+      $HOME/bin
+      /opt/homebrew/bin
+      /opt/homebrew/sbin
+      /usr/local/bin
+      $path
+    )
+    export PATH
+
     # `alias -=cd -` can't live in environment.shellAliases: nix-darwin
     # writes those to /etc/zprofile where zsh parses `-=` as an option.
     # Define it here with `alias --` in interactive shells only.
@@ -117,10 +145,10 @@ in
     }
 
     # ── antidote (zsh plugin manager) ──────────────────────────────
-    # Cache moved out of ~/Library/Caches to survive cleanup tools
+    # Cache moved out of ~/Library/Caches to survive cleanup tools.
+    # antidote itself is the nixpkgs package (migrated from Homebrew).
     zstyle ':antidote:home' dir "$HOME/.local/share/antidote"
-    # source $(brew --prefix) 在 nix 环境 PATH 无 brew 会报错, 写死绝对路径
-    source /opt/homebrew/opt/antidote/share/antidote/antidote.zsh
+    source ${pkgs.antidote}/share/antidote/antidote.zsh
 
     # Rebuild if bundle is stale OR cache directory was cleaned
     if [[ ! ~/.zsh_plugins.zsh -nt ~/.zsh_plugins.txt ]] || [[ ! -d "$HOME/.local/share/antidote" ]]; then

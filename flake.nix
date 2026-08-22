@@ -31,6 +31,7 @@
       modules = [
         ./modules/direnv.nix
         ./modules/darwin-store.nix
+        ./modules/homebrew.nix
         ./modules/system-packages.nix
         ./modules/nix-settings.nix
         ./modules/activation.nix
