@@ -55,8 +55,10 @@
     global = {
       # Point manual `brew bundle` at the generated, store-backed Brewfile.
       brewfile = true;
-      # Suppress Homebrew's own auto-update on manual brew commands;
-      # upgrades are an explicit, deliberate action.
+      # Suppress Homebrew's own auto-update when you run brew commands by
+      # hand. Note: during `darwin-rebuild`, onActivation.autoUpdate=true
+      # still updates/upgrades the declared packages; this only governs
+      # ad-hoc `brew install`/`brew upgrade` typed in a terminal.
       autoUpdate = false;
     };
   };

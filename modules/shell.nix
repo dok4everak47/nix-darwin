@@ -11,6 +11,34 @@ let
   atuin = (unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.atuin).overrideAttrs (old: {
     patches = (old.patches or []) ++ [ ../atuin-fix-search-hyphen.patch ];
   });
+
+  # Canonical PATH ordering, shared by shellInit (all zsh, including
+  # non-interactive) and interactiveShellInit (re-asserted after
+  # ~/.zprofile runs `brew shellenv` in login shells).
+  #   1. keg-only Homebrew full builds beat both nixpkgs and any regular
+  #      brew ffmpeg/magick.
+  #   2. Nix system profile — migrated CLI tools — beats /opt/homebrew/bin.
+  #   3. TeX, user bins, then /opt/homebrew/bin as a fallback.
+  #   4. macOS system paths are preserved via $path (never wholesale-replace).
+  pathInit = ''
+    typeset -U path
+    path=(
+      /opt/homebrew/opt/ffmpeg-full/bin
+      /opt/homebrew/opt/imagemagick-full/bin
+      /run/current-system/sw/bin
+      /nix/var/nix/profiles/default/bin
+      $HOME/.nix-profile/bin
+      /Library/TeX/texbin
+      /usr/local/texlive/2026basic/bin/universal-darwin
+      $HOME/.local/bin
+      $HOME/bin
+      /opt/homebrew/bin
+      /opt/homebrew/sbin
+      /usr/local/bin
+      $path
+    )
+    export PATH
+  '';
 in
 {
   # ── Zsh (nix-darwin writes /etc/{zshenv,zprofile,zshrc}) ────────────
@@ -68,13 +96,12 @@ in
   # REPLACES PATH wholesale, dropping /usr/bin:/bin:/usr/sbin:/sbin (this
   # broke `tr`, `mv`, `uname`, `mkdir`, ... on 2026-08-22).
   #
-  # PATH ordering is finalized inside `interactiveShellInit` (NOT here):
-  # `~/.zprofile` runs `brew shellenv`, which prepends /opt/homebrew/bin
-  # AFTER /etc/zshenv, so anything set here would get pushed behind it.
-  # /etc/zshrc (interactiveShellInit) runs after ~/.zprofile/~/.zshrc, so
-  # that is where we re-assert the intended order. `shellInit` is left
-  # intact for any non-interactive zsh that still inherits the launchd PATH.
-  programs.zsh.shellInit = '''';
+  # pathInit is set here (→ /etc/zshenv, read by EVERY zsh including
+  # non-interactive scripts/cron) AND re-asserted in interactiveShellInit
+  # (→ /etc/zshrc), because ~/.zprofile runs `brew shellenv` which
+  # prepends /opt/homebrew/bin after /etc/zshenv. The interactive re-run
+  # re-establishes the intended order for login/interactive shells.
+  programs.zsh.shellInit = pathInit;
 
   # ── User packages that lived in home.packages under HM ──────────────
   environment.systemPackages = [
@@ -93,31 +120,8 @@ in
   # nix-darwin sources this in /etc/zshrc AFTER compinit setup; it runs
   # before the user's ~/.zshrc.
   programs.zsh.interactiveShellInit = ''
-    # ── Finalize PATH after ~/.zprofile (which runs `brew shellenv`) ─
-    # Order matters:
-    #   1. keg-only Homebrew full builds (ffmpeg-full / imagemagick-full)
-    #      must beat both nixpkgs and any regular brew ffmpeg/magick.
-    #   2. Nix system profile — migrated CLI tools live here and must beat
-    #      /opt/homebrew/bin so the nixpkgs copies are authoritative.
-    #   3. TeX, user bins, then /opt/homebrew/bin as a fallback.
-    #   4. macOS system paths are preserved (never wholesale-replace PATH).
-    typeset -U path
-    path=(
-      /opt/homebrew/opt/ffmpeg-full/bin
-      /opt/homebrew/opt/imagemagick-full/bin
-      /run/current-system/sw/bin
-      /nix/var/nix/profiles/default/bin
-      $HOME/.nix-profile/bin
-      /Library/TeX/texbin
-      /usr/local/texlive/2026basic/bin/universal-darwin
-      $HOME/.local/bin
-      $HOME/bin
-      /opt/homebrew/bin
-      /opt/homebrew/sbin
-      /usr/local/bin
-      $path
-    )
-    export PATH
+    # Re-assert PATH after ~/.zprofile runs `brew shellenv` (see pathInit).
+    ${pathInit}
 
     # `alias -=cd -` can't live in environment.shellAliases: nix-darwin
     # writes those to /etc/zprofile where zsh parses `-=` as an option.
