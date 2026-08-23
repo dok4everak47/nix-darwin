@@ -25,7 +25,8 @@ let
     path=(
       /opt/homebrew/opt/ffmpeg-full/bin
       /opt/homebrew/opt/imagemagick-full/bin
-      /run/current-system/sw/bin
+      # /run/current-system/sw/bin
+      /nix/var/nix/profiles/system/sw/bin
       /nix/var/nix/profiles/default/bin
       $HOME/.nix-profile/bin
       /Library/TeX/texbin
