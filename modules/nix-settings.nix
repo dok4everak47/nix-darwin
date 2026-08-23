@@ -7,11 +7,11 @@
   # Allow dok4ever to specify trusted-public-keys (needed for mirror cache).
   nix.settings.trusted-users = [ "root" "dok4ever" ];
 
-  # ── Binary cache: SJTUG Siyuan mirror (faster in CN than cache.nixos.org) ──
-  # https://help.mirrors.cernet.edu.cn/nix-channels/?mirror=SJTUG-Siyuan
-  # SJTUG mirrors cache.nixos.org, same trusted key applies.
+  # ── Binary cache: official cache.nixos.org only ──────────────────────
+  # 2026-08-24: SJTU mirror 频繁超时/挂起, darwin-rebuild 卡死在
+  # "querying ... on mirror.sjtu.edu.cn"; 换回官方单源。如需镜像,
+  # 放官方之后做 fallback, 不要放第一位。
   nix.settings.substituters = [
-    "https://mirror.sjtu.edu.cn/nix-channels/store"
     "https://cache.nixos.org"
   ];
   nix.settings.trusted-public-keys = [
