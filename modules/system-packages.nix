@@ -31,6 +31,8 @@
   # 安装在 modules/shell.nix；direnv 由 programs.direnv.enable 自动提供;
   # taskwarrior3/taskwarrior-tui/vit 已迁移 htask, 遗留已删。
   #
+  # tmux (2026-08): moved to modules/tmux.nix — programs.tmux.enable ships a
+  # wrapped tmux (-f /etc/tmux.conf); a bare pkgs.tmux here would collide.
   # Homebrew takeover (2026-08): CLI tools migrated here from brew.
   # ffmpeg-full / imagemagick-full stay on Homebrew (full feature set),
   # managed in modules/homebrew.nix and prioritized in shell.nix PATH.
@@ -52,7 +54,6 @@
     }) # Emacs 30 + xwidget-webkit (内嵌浏览器, 跑 CSS/JS); GUI at /Applications/Nix Apps/Emacs.app
     fd
     nmap
-    tmux
     nil
     alejandra
     ghostty-bin

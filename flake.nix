@@ -38,6 +38,7 @@
         ./modules/shell.nix
         ./modules/fetch.nix
         ./modules/elm.nix
+        ./modules/tmux.nix
 
         # Set Git commit hash for darwin-version (needs `self`, so lives here).
         { system.configurationRevision = self.rev or self.dirtyRev or null; }
