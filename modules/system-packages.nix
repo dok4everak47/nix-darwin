@@ -9,6 +9,18 @@
   # fixup 阶段用 adhoc 重新签名。已验证产物:
   # /nix/store/g5rkdxik56x2p8fg3g5flw31dmi72z0k-opencode-1.15.10
   nixpkgs.overlays = [
+    # 2026-08-24: 上游 26.05 的 llvm openmp 补丁 run-lit-directly.patch 是空文件
+    # (blob e69de29, 见 GitHub API), patch(1) 报 "Only garbage was found",
+    # 炸掉 openmp -> fftw -> vid.stab -> ffmpeg -> imagemagick 整条链。
+    # 空补丁本就是 no-op, 直接从 patches 里过滤掉。
+    (final: prev: {
+      openmp = prev.openmp.overrideAttrs (old: {
+        patches = builtins.filter
+          (p: builtins.match ".*run-lit-directly.patch" (toString p) == null)
+          (old.patches or []);
+      });
+    })
+
     (final: prev: {
       opencode = prev.opencode.overrideAttrs (old: {
         dontStrip = true;
