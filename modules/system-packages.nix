@@ -34,45 +34,46 @@
   # Homebrew takeover (2026-08): CLI tools migrated here from brew.
   # ffmpeg-full / imagemagick-full stay on Homebrew (full feature set),
   # managed in modules/homebrew.nix and prioritized in shell.nix PATH.
-  environment.systemPackages = [
-    pkgs.vim
-    pkgs.neovim
-    pkgs.fastfetch
-    pkgs.wget
-    pkgs.curl
-    pkgs.bat
-    pkgs.eza
-    pkgs.himalaya
-    pkgs.neomutt
-    pkgs.isync
-    pkgs.yazi
-    (pkgs.emacs.override {
+  environment.systemPackages = with pkgs;[
+    vim
+    neovim
+    fastfetch
+    wget
+    curl
+    bat
+    eza
+    himalaya
+    neomutt
+    isync
+    yazi
+    (emacs.override {
       withXwidgets = true;
       withXinput2 = true;
     }) # Emacs 30 + xwidget-webkit (内嵌浏览器, 跑 CSS/JS); GUI at /Applications/Nix Apps/Emacs.app
-    pkgs.fd
-    pkgs.nmap
-    pkgs.tmux
-    pkgs.nil
-    pkgs.alejandra
-    pkgs.ghostty-bin
-    pkgs.zed-editor
-    pkgs.mdcat
-    pkgs.opencode
+    fd
+    nmap
+    tmux
+    nil
+    alejandra
+    ghostty-bin
+    zed-editor
+    mdcat
+    opencode
 
     # ── Migrated from Homebrew ────────────────────────────────────────
-    pkgs.antidote   # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
-    pkgs.cmake
-    pkgs.delta      # git-delta
-    pkgs.jq
-    pkgs.lazygit
-    pkgs.nb
-    pkgs.ntfy
-    pkgs.poppler-utils  # pdftotext, pdfinfo, ... (poppler is the GLib lib)
-    pkgs.resvg
-    pkgs.ripgrep
-    pkgs._7zz       # 7-Zip CLI (binary is `7zz`; replaces brew sevenzip)
-    pkgs.socat
+    antidote   # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
+    cmake
+    delta      # git-delta
+    jq
+    lazygit
+    nb
+    ntfy
+    poppler-utils  # pdftotext, pdfinfo, ... (poppler is the GLib lib)
+    resvg
+    ripgrep
+    _7zz       # 7-Zip CLI (binary is `7zz`; replaces brew sevenzip)
+    socat
+    zellij
   ];
 
   # ── LANG (2026-08-14) ────────────────────────────────────────────────
