@@ -51,7 +51,12 @@ in
       # 直接从 nix store 引用, 只读, 免安装。
       source-file ${gpakoszTmux}/.tmux.conf
 
-      # ── 3. 前缀键: C-a (主前缀) ────────────────────────────────────
+      # ── 3. extended-keys ────────────────────────────────────────────
+      # gpakosz 根据终端类型自动开关; 在 Terminal.app 等终端上会关掉,
+      # 导致 "Modified Enter keys may not work" 警告, 强制打开即可。
+      set -g extended-keys on
+
+      # ── 4. 前缀键: C-a (主前缀) ────────────────────────────────────
       # gpakosz 默认保留 C-b 作为主前缀, C-a 作为第二前缀 (prefix2)。
       # 我们偏好 C-a 为主, 双击穿透（C-a C-a 发送字面 C-a 给 zsh/nvim）。
       set -g prefix C-a
@@ -59,16 +64,16 @@ in
       # gpakosz 已设 bind C-a send-prefix -2, 我们覆盖成主前缀穿透
       bind C-a send-prefix
 
-      # ── 4. 分屏快捷键（继承当前路径）──────────────────────────────
+      # ── 5. 分屏快捷键（继承当前路径）──────────────────────────────
       # 形状助记: | 竖线 → 左右分屏, - 横线 → 上下分屏
       # gpakosz 用 bind - split-window -v (上下) 和 bind _ (左右),
       # 我们保留 - 的原意, 新增 | 作为左右分屏。
       bind | split-window -h -c "#{pane_current_path}"
 
-      # ── 5. 状态栏刷新 ──────────────────────────────────────────────
+      # ── 6. 状态栏刷新 ──────────────────────────────────────────────
       set -g status-interval 5
 
-      # ── 6. 热重载（覆盖 gpakosz 的 bind r, 走 /etc/tmux.conf）────
+      # ── 7. 热重载（覆盖 gpakosz 的 bind r, 走 /etc/tmux.conf）────
       bind r source-file /etc/tmux.conf \; display-message "tmux.conf reloaded"
     '';
   };
