@@ -189,5 +189,39 @@ in
       pnpm run build &&
       dsh --version
     }
+
+    # dsh-web-ui update
+    dsh-web-ui-update() {
+      cd /Users/dok4ever/Project/dsh-web-ui || return 1
+      GIT_SSL_NO_VERIFY=1 git pull --rebase &&
+      pnpm install &&
+      pnpm run build
+      # Re-link @linxin666 packages to profile node_modules
+      local profile_nm="$HOME/.dsh/profiles/web/node_modules/@linxin666"
+      [ -d "$profile_nm" ] && {
+        rm -f "$profile_nm"/dsh-client-ui-aionui-panel "$profile_nm"/dsh-chat-recovery "$profile_nm"/dsh-client-ui-community-plugins "$profile_nm"/dsh-desktop-launcher "$profile_nm"/dsh-doctor "$profile_nm"/dsh-client-ui-git-graph "$profile_nm"/dsh-liangshen "$profile_nm"/dsh-client-ui-market "$profile_nm"/dsh-pet "$profile_nm"/dsh-client-ui-plugin-manager "$profile_nm"/dsh-remote-web-ui "$profile_nm"/dsh-client-ui-session-id "$profile_nm"/dsh-client-ui-skill-explorer "$profile_nm"/dsh-ssh "$profile_nm"/dsh-client-ui-task-board "$profile_nm"/dsh-tool-describe-image "$profile_nm"/dsh-web-all "$profile_nm"/dsh-client-ui-web-ui-settings
+        ln -sf "$PWD/packages/dsh-aionui-panel"             "$profile_nm"/dsh-client-ui-aionui-panel
+        ln -sf "$PWD/packages/dsh-chat-recovery"            "$profile_nm"/dsh-chat-recovery
+        ln -sf "$PWD/packages/dsh-community-plugins"        "$profile_nm"/dsh-client-ui-community-plugins
+        ln -sf "$PWD/packages/dsh-desktop-launcher"         "$profile_nm"/dsh-desktop-launcher
+        ln -sf "$PWD/packages/dsh-doctor"                   "$profile_nm"/dsh-doctor
+        ln -sf "$PWD/packages/dsh-git-graph"                "$profile_nm"/dsh-client-ui-git-graph
+        ln -sf "$PWD/packages/dsh-liangshen"                "$profile_nm"/dsh-liangshen
+        ln -sf "$PWD/packages/dsh-market"                   "$profile_nm"/dsh-client-ui-market
+        ln -sf "$PWD/packages/dsh-pet"                      "$profile_nm"/dsh-pet
+        ln -sf "$PWD/packages/dsh-plugin-manager"           "$profile_nm"/dsh-client-ui-plugin-manager
+        ln -sf "$PWD/packages/dsh-remote-web-ui"            "$profile_nm"/dsh-remote-web-ui
+        ln -sf "$PWD/packages/dsh-session-id"               "$profile_nm"/dsh-client-ui-session-id
+        ln -sf "$PWD/packages/dsh-skill-explorer"           "$profile_nm"/dsh-client-ui-skill-explorer
+        ln -sf "$PWD/packages/dsh-ssh"                      "$profile_nm"/dsh-ssh
+        ln -sf "$PWD/packages/dsh-task-board"               "$profile_nm"/dsh-client-ui-task-board
+        ln -sf "$PWD/packages/dsh-tool-describe-image"      "$profile_nm"/dsh-tool-describe-image
+        ln -sf "$PWD/packages/dsh-web-all"                  "$profile_nm"/dsh-web-all
+        ln -sf "$PWD/packages/dsh-web-settings"             "$profile_nm"/dsh-client-ui-web-ui-settings
+      }
+      # Ensure profile package.json references the right name
+      sed -i  's/dsh-web-ui-all/dsh-web-all/g' "$HOME/.dsh/profiles/web/package.json"
+      launchctl kickstart -k gui/501/com.dsh.web
+    }
   '';
 }
