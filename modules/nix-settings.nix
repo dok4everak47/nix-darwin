@@ -4,19 +4,29 @@
   # Necessary for using flakes on this system.
   nix.settings.experimental-features = "nix-command flakes";
 
-  # Allow dok4ever to specify trusted-public-keys (needed for mirror cache).
-  nix.settings.trusted-users = [ "root" "dok4ever" ];
-
   # ── Binary cache: official cache.nixos.org only ──────────────────────
   # 2026-08-24: SJTU mirror 频繁超时/挂起, darwin-rebuild 卡死在
   # "querying ... on mirror.sjtu.edu.cn"; 换回官方单源。如需镜像,
   # 放官方之后做 fallback, 不要放第一位。
-  nix.settings.substituters = [
-    "https://cache.nixos.org"
-  ];
-  nix.settings.trusted-public-keys = [
-    "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-  ];
+  # substituters / trusted-public-keys / trusted-users 由 nix-darwin 默认提供,
+  # 这里只补充 flake 特有的项避免 mkMerge 重复。
+  # 默认: substituters = mkAfter [ "https://cache.nixos.org/" ]
+  #       trusted-public-keys = [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ]
+  #       trusted-users = [ "root" ]
+  nix.settings.trusted-users = [ "dok4ever" ];
+
+  # ── Proxy for nix-daemon ────────────────────────────────────────────
+  # nix-daemon 是 root 常驻进程，从 launchd 启动时不继承 shell 代理变量，
+  # 直连 cache.nixos.org 被墙。nix.envVars 是官方设计给 daemon 注入环境
+  # 的入口：会写入 launchd daemon plist 的 EnvironmentVariables + 系统变量。
+  nix.envVars = {
+    http_proxy = "http://127.0.0.1:7890";
+    https_proxy = "http://127.0.0.1:7890";
+    HTTP_PROXY = "http://127.0.0.1:7890";
+    HTTPS_PROXY = "http://127.0.0.1:7890";
+    no_proxy = "localhost,127.0.0.1,::1,feishu.cn,.feishu.cn,larksuite.com,.larksuite.com";
+    NO_PROXY = "localhost,127.0.0.1,::1,feishu.cn,.feishu.cn,larksuite.com,.larksuite.com";
+  };
 
   # ── Auto GC: keep /nix/store bounded (encrypted APFS volume is small) ──
   # Per nixos-and-flakes.thiscute.world "Other useful Tips".
