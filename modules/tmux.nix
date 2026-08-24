@@ -46,6 +46,8 @@ in
       # /etc/tmux.conf.local 做免重建的临时修改。
       set-environment -g TMUX_CONF ${gpakoszTmux}/.tmux.conf
       set-environment -g TMUX_CONF_LOCAL /etc/tmux.conf.local
+      # 插件管理器路径: 指向可写位置, 避免 gpakosz 试图写入只读的 store。
+      set-environment -g TMUX_PLUGIN_MANAGER_PATH /Users/dok4ever/.tmux/plugins
 
       # ── 2. 加载 gpakosz/.tmux ──────────────────────────────────────
       # 直接从 nix store 引用, 只读, 免安装。
