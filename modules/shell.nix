@@ -191,8 +191,14 @@ in
     }
 
     # dsh-web-ui update
+    # Usage: dsh-web-ui-update [branch-name]
+    #  - No argument: update current branch
+    #  - With branch-name: checkout to specified branch first, then update
     dsh-web-ui-update() {
       cd /Users/dok4ever/Project/dsh-web-ui || return 1
+      if [ -n "$1" ]; then
+        git checkout "$1" || return 1
+      fi
       GIT_SSL_NO_VERIFY=1 git pull --rebase &&
       pnpm install &&
       pnpm run build
