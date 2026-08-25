@@ -16,7 +16,8 @@ in {
     # dsh update
     dsh-update() {
       cd ${home}/Project/deepseek-harness || return 1
-      git pull &&
+      https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890 \
+        git pull &&
       pnpm install &&
       pnpm run build &&
       dsh --version
@@ -46,7 +47,8 @@ in {
         local branch="$branches[$sel]"
         git checkout "$branch" || return 1
       fi
-      GIT_SSL_NO_VERIFY=1 git pull --rebase &&
+      GIT_SSL_NO_VERIFY=1 https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890 \
+        git pull --rebase &&
       pnpm install &&
       pnpm run build
       # Re-link @linxin666 packages to profile node_modules
@@ -75,7 +77,35 @@ in {
       # Ensure profile package.json references the right name
       sed -i.bak 's/dsh-web-ui-all/dsh-web-all/g' "$HOME/.dsh/profiles/web/package.json"
       rm -f "$HOME/.dsh/profiles/web/package.json.bak"
+
+      # The 3080 service (`dsh web`) runs from deepseek-harness, not dsh-web-ui.
+      # If CLI/server code changed, pull + rebuild it too; don't fail the whole
+      # update if there's a local conflict (still restart with current build).
+      local harness_dir=${home}/Project/deepseek-harness
+      if [ -d "$harness_dir/.git" ]; then
+        echo "→ Updating deepseek-harness (dsh web backend)..."
+        (
+          cd "$harness_dir" || exit 0
+          https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890 \
+            git pull --rebase &&
+          pnpm install &&
+          pnpm run build &&
+          dsh --version
+        ) || echo "⚠ deepseek-harness update failed; restarting with current build." >&2
+      fi
+
       launchctl kickstart -k "gui/$(id -u)/com.dsh.web"
+    }
+
+    # dsh-web-ui local reload (fast path for local development).
+    # Rebuilds the dsh-web-ui packages (which are symlinked into the profile)
+    # and restarts the 3080 service. Does NOT touch git, pnpm install, or
+    # deepseek-harness. Use after editing local dsh-web-ui code.
+    dsh-web-reload() {
+      cd ${home}/Project/dsh-web-ui || return 1
+      pnpm run build || { echo "✖ build failed" >&2; return 1; }
+      launchctl kickstart -k "gui/$(id -u)/com.dsh.web"
+      echo "✓ rebuilt and restarted com.dsh.web (port 3080)"
     }
   '';
 }
