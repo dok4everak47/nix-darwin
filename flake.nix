@@ -10,7 +10,7 @@
     # atuin needs >= 18.16 (2026-07-09 "shell" migration); stable 26.05 only has 18.15.2.
     # Pin to rev 6f6fca05 = atuin 18.17.1 (last version before 18.18's
     # "duplicate column: shell" migration bug on an already-migrated db).
-    # 18.17.1 is patched for search bug #3908 in modules/shell.nix.
+    # 18.17.1 is patched for search bug #3908 in modules/overlays/default.nix.
     unstable.url = "github:NixOS/nixpkgs/6f6fca055bb8d39ccd3e3be1e27d8b58b9a442d1";
 
     # fetch (animated 3D fetch tool) -- https://github.com/areofyl/fetch
@@ -31,7 +31,13 @@
     # $ darwin-rebuild switch --flake .#dok4ever-mac
     darwinConfigurations."dok4ever-mac" = nix-darwin.lib.darwinSystem {
       # Pass `inputs` to all modules so they can access overlay/input attrs.
-      specialArgs = {inherit inputs unstable;};
+      specialArgs = {
+        # Only expose what modules actually consume, not the whole input set:
+        #   - unstable  → overlays (atuin 18.17.1)
+        #   - areofyl-fetch → programs/fetch.nix
+        inherit unstable;
+        areofyl-fetch = inputs.areofyl-fetch;
+      };
 
       modules = [
         # All sub-modules are aggregated in modules/default.nix

@@ -75,7 +75,7 @@ in {
       # Ensure profile package.json references the right name
       sed -i.bak 's/dsh-web-ui-all/dsh-web-all/g' "$HOME/.dsh/profiles/web/package.json"
       rm -f "$HOME/.dsh/profiles/web/package.json.bak"
-      launchctl kickstart -k gui/501/com.dsh.web
+      launchctl kickstart -k "gui/$(id -u)/com.dsh.web"
     }
   '';
 }

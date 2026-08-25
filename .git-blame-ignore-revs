@@ -1,0 +1,4 @@
+# Commits that are pure formatting changes and should be skipped by
+# `git blame` (use: git blame --ignore-revs-file .git-blame-ignore-revs,
+# or set blame.ignoreRevsFile globally so it's automatic).
+fa6ba809dfac35911523d91403294a71cb00e8f0

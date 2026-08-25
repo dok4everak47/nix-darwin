@@ -2,7 +2,7 @@
   config,
   lib,
   pkgs,
-  inputs,
+  areofyl-fetch,
   ...
 }: let
   shared = import ../lib.nix {};
@@ -67,7 +67,7 @@
     lib.concatStringsSep "\n" (cfg.info ++ settingLines) + "\n"
   );
 
-  fetchPkg = inputs.areofyl-fetch.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  fetchPkg = areofyl-fetch.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in {
   # ── fetch binary (was home.packages via HM module) ──────────────────
   environment.systemPackages = [fetchPkg];
