@@ -40,6 +40,10 @@ in {
   # Auto optimise (dedup hardlinks) after each activation.
   nix.optimise.automatic = true;
 
+  # Dedup on every store import (not just the periodic `nix-store --optimise`).
+  # Encrypted APFS volume is small — hardlink duplicate nars as they land.
+  nix.settings.auto-optimise-store = true;
+
   # Enable alternative shell support in nix-darwin.
   # programs.fish.enable = true;
 

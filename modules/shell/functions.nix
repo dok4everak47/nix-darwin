@@ -47,7 +47,7 @@ in {
         local branch="$branches[$sel]"
         git checkout "$branch" || return 1
       fi
-      GIT_SSL_NO_VERIFY=1 https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890 \
+      https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890 \
         git pull --rebase &&
       pnpm install &&
       pnpm run build
