@@ -226,7 +226,7 @@ in
         ln -sf "$PWD/packages/dsh-web-settings"             "$profile_nm"/dsh-client-ui-web-ui-settings
       }
       # Ensure profile package.json references the right name
-      sed -i '' 's/dsh-web-ui-all/dsh-web-all/g' "$HOME/.dsh/profiles/web/package.json"
+      sed -i '''' 's/dsh-web-ui-all/dsh-web-all/g' "$HOME/.dsh/profiles/web/package.json"
       launchctl kickstart -k gui/501/com.dsh.web
     }
   '';
