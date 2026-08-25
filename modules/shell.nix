@@ -58,6 +58,7 @@ in
     ll = "eza -lah --classify --sort=type";
     la = "eza -a";
     tree = "eza --tree";
+    "--" = "cd ..";
     ".." = "cd ..";
     "..." = "cd ../..";
     "...." = "cd ../../..";
@@ -93,23 +94,18 @@ in
   };
 
   # ── PATH additions ───────────────────────────────────────────────────
-  # NOTE: cannot use `environment.variables.PATH = [ ... ]` because nix-darwin
-  # REPLACES PATH wholesale, dropping /usr/bin:/bin:/usr/sbin:/sbin (this
-  # broke `tr`, `mv`, `uname`, `mkdir`, ... on 2026-08-22).
+  # NOTE: cannot use `environment.variables.PATH = [ ... ]` because nix-dar
   #
-  # pathInit is set here (→ /etc/zshenv, read by EVERY zsh including
-  # non-interactive scripts/cron) AND re-asserted in interactiveShellInit
-  # (→ /etc/zshrc), because ~/.zprofile runs `brew shellenv` which
-  # prepends /opt/homebrew/bin after /etc/zshenv. The interactive re-run
-  # re-establishes the intended order for login/interactive shells.
+  #   1. keg-only Homebrew full builds beat both nixpkgs and any regular
+  #      brew ffmpeg/magick.
+  #   2. Nix system profile — migrated CLI tools — beats /opt/homebrew/bin.
+  #   3. TeX, user bins, then /opt/homebrew/bin as a fallback.
+  #   4. macOS system paths are preserved via $path (never wholesale-replace).
   programs.zsh.shellInit = pathInit;
 
-  # ── User packages that lived in home.packages under HM ──────────────
+  # ── User packages that lived in home.packages under HM ─────────────
   environment.systemPackages = [
-    pkgs.fzf
-    pkgs.starship
     pkgs.zoxide
-    atuin
   ];
 
   # ── Prompt: starship (replaces HM programs.starship.enableZshIntegration) ──
@@ -124,40 +120,9 @@ in
     # Re-assert PATH after ~/.zprofile runs `brew shellenv` (see pathInit).
     ${pathInit}
 
-    # `alias -=cd -` can't live in environment.shellAliases: nix-darwin
-    # writes those to /etc/zprofile where zsh parses `-=` as an option.
-    # Define it here with `alias --` in interactive shells only.
-    alias -- -='cd -'
-
-    # iterm2 shell integration
-    test -e "''${HOME}/.iterm2_shell_integration.zsh" && source "''${HOME}/.iterm2_shell_integration.zsh"
-
-    # Nix profile env (DeterminateSystems / standalone installer)
-    [ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
-
-    # NVM
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
-    # yazi wrapper: cd to last dir on exit
-    function y() {
-      local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-      command yazi "$@" --cwd-file="$tmp"
-      IFS= read -r -d ''' cwd < "$tmp"
-      [ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
-      command rm -f -- "$tmp"
-    }
-
-    # ── antidote (zsh plugin manager) ──────────────────────────────
-    # Cache moved out of ~/Library/Caches to survive cleanup tools.
-    # antidote itself is the nixpkgs package (migrated from Homebrew).
-    zstyle ':antidote:home' dir "$HOME/.local/share/antidote"
-    source ${pkgs.antidote}/share/antidote/antidote.zsh
-
     # Rebuild if bundle is stale OR cache directory was cleaned
     if [[ ! ~/.zsh_plugins.zsh -nt ~/.zsh_plugins.txt ]] || [[ ! -d "$HOME/.local/share/antidote" ]]; then
-      antidote bundle < ~/.zsh_plugins.txt > ~/.zsh_plugins.zsh
+        antidote bundle < ~/.zsh_plugins.txt > ~/.zsh_plugins.zsh
     fi
 
     # ── Completion: case-insensitive (fzf-tab) ───────────────────
@@ -165,7 +130,6 @@ in
     zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 
     source ~/.zsh_plugins.zsh
-
     # bun completions
     [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
@@ -191,13 +155,28 @@ in
     }
 
     # dsh-web-ui update
-    # Usage: dsh-web-ui-update [branch-name]
-    #  - No argument: update current branch
-    #  - With branch-name: checkout to specified branch first, then update
+    # Interactive: lists local branches, select one to update
     dsh-web-ui-update() {
       cd /Users/dok4ever/Project/dsh-web-ui || return 1
-      if [ -n "$1" ]; then
-        git checkout "$1" || return 1
+
+      # List all local branches
+      echo "Available local branches:"
+      local branches=($(git branch --format="%(refname:short)"))
+      for i in "${!branches[@]}"; do
+        echo "  $((i+1))) ${branches[$i]}"
+      done
+
+      # Ask user selection
+      echo -n "Enter number to select branch (enter for current branch '$(git rev-parse --abbrev-ref HEAD)'): "
+      read -r sel
+
+      if [ -n "$sel" ]; then
+        if ! [[ "$sel" =~ ^[0-9]+$ ]] || [ "$sel" -lt 1 ] || [ "$sel" -gt "${#branches[@]}" ]; then
+          echo "Invalid selection, abort" >&2
+          return 1
+        fi
+        local branch="${branches[$((sel-1))]}"
+        git checkout "$branch" || return 1
       fi
       GIT_SSL_NO_VERIFY=1 git pull --rebase &&
       pnpm install &&
@@ -226,7 +205,8 @@ in
         ln -sf "$PWD/packages/dsh-web-settings"             "$profile_nm"/dsh-client-ui-web-ui-settings
       }
       # Ensure profile package.json references the right name
-      sed -i '''' 's/dsh-web-ui-all/dsh-web-all/g' "$HOME/.dsh/profiles/web/package.json"
+      sed -i.bak 's/dsh-web-ui-all/dsh-web-all/g' "$HOME/.dsh/profiles/web/package.json"
+      rm -f "$HOME/.dsh/profiles/web/package.json.bak"
       launchctl kickstart -k gui/501/com.dsh.web
     }
   '';
