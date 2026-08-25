@@ -15,18 +15,21 @@ in {
   programs.zsh.interactiveShellInit = ''
     # dsh update
     dsh-update() {
-      cd ${home}/Project/deepseek-harness || return 1
-      https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890 \
-        git pull &&
-      pnpm install &&
-      pnpm run build &&
-      dsh --version
+      (
+        cd ${home}/Project/deepseek-harness || exit 1
+        https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890 \
+          git pull &&
+        pnpm install &&
+        pnpm run build &&
+        dsh --version
+      )
     }
 
     # dsh-web-ui update
     # Interactive: lists local branches, select one to update
     dsh-web-ui-update() {
-      cd ${home}/Project/dsh-web-ui || return 1
+      (
+      cd ${home}/Project/dsh-web-ui || exit 1
 
       # List all local branches
       echo "Available local branches:"
@@ -42,10 +45,10 @@ in {
       if [ -n "$sel" ]; then
         if ! [[ "$sel" =~ ^[0-9]+$ ]] || [ "$sel" -lt 1 ] || [ "$sel" -gt "$#branches" ]; then
           echo "Invalid selection, abort" >&2
-          return 1
+          exit 1
         fi
         local branch="$branches[$sel]"
-        git checkout "$branch" || return 1
+        git checkout "$branch" || exit 1
       fi
       https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890 \
         git pull --rebase &&
@@ -95,6 +98,7 @@ in {
       fi
 
       launchctl kickstart -k "gui/$(id -u)/com.dsh.web"
+      )
     }
 
     # dsh-web-ui local reload (fast path for local development).
@@ -102,10 +106,12 @@ in {
     # and restarts the 3080 service. Does NOT touch git, pnpm install, or
     # deepseek-harness. Use after editing local dsh-web-ui code.
     dsh-web-reload() {
-      cd ${home}/Project/dsh-web-ui || return 1
-      pnpm run build || { echo "✖ build failed" >&2; return 1; }
-      launchctl kickstart -k "gui/$(id -u)/com.dsh.web"
-      echo "✓ rebuilt and restarted com.dsh.web (port 3080)"
+      (
+        cd ${home}/Project/dsh-web-ui || exit 1
+        pnpm run build || { echo "✖ build failed" >&2; exit 1; }
+        launchctl kickstart -k "gui/$(id -u)/com.dsh.web"
+        echo "✓ rebuilt and restarted com.dsh.web (port 3080)"
+      )
     }
   '';
 }
