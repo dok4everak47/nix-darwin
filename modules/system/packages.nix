@@ -43,6 +43,7 @@
     mdcat
     opencode
     nix-search-cli
+    cliamp
 
     # ── Migrated from Homebrew ────────────────────────────────────────
     antidote # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
