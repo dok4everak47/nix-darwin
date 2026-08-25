@@ -176,8 +176,8 @@ in
       # List all local branches
       echo "Available local branches:"
       local branches=($(git branch --format="%(refname:short)"))
-      for i in "''${!branches[@]}"; do
-        echo "  $((i+1))) ''${branches[$i]}"
+      for (( i=1; i<=$#branches; i++ )); do
+        echo "  $i) $branches[$i]"
       done
 
       # Ask user selection
@@ -185,11 +185,11 @@ in
       read -r sel
 
       if [ -n "$sel" ]; then
-        if ! [[ "$sel" =~ ^[0-9]+$ ]] || [ "$sel" -lt 1 ] || [ "$sel" -gt "''${#branches[@]}" ]; then
+        if ! [[ "$sel" =~ ^[0-9]+$ ]] || [ "$sel" -lt 1 ] || [ "$sel" -gt "$#branches" ]; then
           echo "Invalid selection, abort" >&2
           return 1
         fi
-        local branch="''${branches[$((sel-1))]}"
+        local branch="$branches[$sel]"
         git checkout "$branch" || return 1
       fi
       GIT_SSL_NO_VERIFY=1 git pull --rebase &&
