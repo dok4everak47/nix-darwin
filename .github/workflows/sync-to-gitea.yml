@@ -1,5 +1,14 @@
 name: Sync to Gitea
 
+# Mirror every push to the personal Gitea instance.
+#
+# Why HTTPS + token instead of SSH on port 2222:
+#   GitHub-hosted runners (Azure) frequently cannot reach tcp/2222 of
+#   Aliyun ECS — connections time out along the international path even
+#   though port 2222 is reachable from other networks. HTTPS on 443 is
+#   globally reachable, so we push over it using a Gitea access token
+#   (GITEA_TOKEN, scope: repository read/write). SSH mirroring (2222,
+#   GITEA_SSH_KEY) was the previous approach and is no longer used.
 on:
   push:
     branches: ['**']
@@ -9,22 +18,32 @@ on:
 permissions:
   contents: read
 
+# Cancel older queued runs when new commits land quickly on the same ref,
+# so a burst of pushes doesn't queue redundant mirror jobs.
+concurrency:
+  group: gitea-mirror-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
       - name: Mirror clone from GitHub
         run: |
-          git clone --mirror https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git repo.git
-          cd repo.git
-          git remote set-url --push origin ssh://git@gitea.luongchin.com:2222/dok4ever/${{ github.event.repository.name }}.git
+          git clone --mirror "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" repo.git
+
       - name: Push mirror to Gitea
         env:
-          GITEA_SSH_KEY: ${{ secrets.GITEA_SSH_KEY }}
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
         run: |
-          mkdir -p ~/.ssh
-          echo "$GITEA_SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -p 2222 gitea.luongchin.com >> ~/.ssh/known_hosts 2>/dev/null
           cd repo.git
-          git push --mirror origin
+          # $GITHUB_REPOSITORY is "owner/repo"; Gitea lives under the same
+          # username "dok4ever" (which is not always the same as the GitHub
+          # owner). Hard-code Gitea owner; repo name matches GitHub's.
+          GITEA_REPO="dok4ever/${GITHUB_REPOSITORY##*/}"
+          git remote set-url --push origin "https://dok4ever:${GITEA_TOKEN}@gitea.luongchin.com/${GITEA_REPO}.git"
+          # --mirror pushes all refs (branches, tags, notes) and deletes
+          # refs on Gitea that no longer exist on GitHub.
+          # Hide the token from the log via Git's URL credential redaction.
+          git config --local url."https://dok4ever:${GITEA_TOKEN}@gitea.luongchin.com/".insteadOf "https://gitea.luongchin.com/"
+          git push --mirror "https://gitea.luongchin.com/${GITEA_REPO}.git"
