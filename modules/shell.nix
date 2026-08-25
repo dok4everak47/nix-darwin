@@ -58,7 +58,9 @@ in
     ll = "eza -lah --classify --sort=type";
     la = "eza -a";
     tree = "eza --tree";
-    "--" = "cd ..";
+    # NOTE: "--" is intentionally NOT here — nix-darwin writes shellAliases to
+    # /etc/zprofile where zsh errors with "bad option: -=". It's defined via
+    # `alias --` in interactiveShellInit below.
     ".." = "cd ..";
     "..." = "cd ../..";
     "...." = "cd ../../..";
@@ -106,6 +108,7 @@ in
   # ── User packages that lived in home.packages under HM ─────────────
   environment.systemPackages = [
     pkgs.zoxide
+    atuin  # patched unstable build; needed on PATH (atuin init calls bare `atuin`)
   ];
 
   # ── Prompt: starship (replaces HM programs.starship.enableZshIntegration) ──
@@ -117,6 +120,12 @@ in
   # nix-darwin sources this in /etc/zshrc AFTER compinit setup; it runs
   # before the user's ~/.zshrc.
   programs.zsh.interactiveShellInit = ''
+    # Aliases starting with `-` can't live in environment.shellAliases (nix-darwin
+    # writes those to /etc/zprofile, where zsh errors with "bad option: -=").
+    # Define them here with `alias --` in interactive shells only.
+    alias -- -= 'cd -'
+    alias -- --='cd ..'
+
     # Re-assert PATH after ~/.zprofile runs `brew shellenv` (see pathInit).
     ${pathInit}
 
@@ -128,6 +137,11 @@ in
     # ── Completion: case-insensitive (fzf-tab) ───────────────────
     # zsh 默认补全大小写敏感；这里让小写也能匹配大写(cd doc → Documents)
     zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+
+    # compinit MUST run before sourcing plugins: oh-my-zsh plugins (e.g. git)
+    # call `compdef` at load time. nix-darwin runs its own compinit at the end
+    # of /etc/zshrc (after interactiveShellInit), which is too late.
+    autoload -U compinit && compinit
 
     source ~/.zsh_plugins.zsh
     # bun completions
@@ -162,8 +176,8 @@ in
       # List all local branches
       echo "Available local branches:"
       local branches=($(git branch --format="%(refname:short)"))
-      for i in "${!branches[@]}"; do
-        echo "  $((i+1))) ${branches[$i]}"
+      for i in "''${!branches[@]}"; do
+        echo "  $((i+1))) ''${branches[$i]}"
       done
 
       # Ask user selection
@@ -171,11 +185,11 @@ in
       read -r sel
 
       if [ -n "$sel" ]; then
-        if ! [[ "$sel" =~ ^[0-9]+$ ]] || [ "$sel" -lt 1 ] || [ "$sel" -gt "${#branches[@]}" ]; then
+        if ! [[ "$sel" =~ ^[0-9]+$ ]] || [ "$sel" -lt 1 ] || [ "$sel" -gt "''${#branches[@]}" ]; then
           echo "Invalid selection, abort" >&2
           return 1
         fi
-        local branch="${branches[$((sel-1))]}"
+        local branch="''${branches[$((sel-1))]}"
         git checkout "$branch" || return 1
       fi
       GIT_SSL_NO_VERIFY=1 git pull --rebase &&
