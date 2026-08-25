@@ -41,7 +41,9 @@
 
       modules = [
         # All sub-modules are aggregated in modules/default.nix
-        # (overlays → system → shell → programs → fixes).
+        # (overlays → system → shell → programs → fixes). The custom-icons
+        # module lives at modules/system/custom-icons.nix (vendored from
+        # ryanccn/nix-darwin-custom-icons, rev ad3e8cf).
         ./modules
 
         # Set Git commit hash for darwin-version (needs `self`, so lives here).

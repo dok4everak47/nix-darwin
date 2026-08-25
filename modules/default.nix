@@ -12,6 +12,7 @@
     ./system/homebrew.nix
     ./system/packages.nix
     ./system/activation.nix
+    ./system/custom-icons.nix
 
     # ── Shell ──────────────────────────────────────────────────────────
     ./shell/default.nix
