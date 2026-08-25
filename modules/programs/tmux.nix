@@ -1,6 +1,8 @@
 { config, lib, pkgs, ... }:
 
 let
+  shared = import ../lib.nix { };
+
   # gpakosz/.tmux — 强大的 tmux 配置框架 (状态栏/主题/快捷键)
   # 固定 commit (2026-08-24 HEAD), sha256 由 nix-prefetch-url 计算。
   gpakoszTmux = pkgs.fetchFromGitHub {
@@ -47,7 +49,7 @@ in
       set-environment -g TMUX_CONF ${gpakoszTmux}/.tmux.conf
       set-environment -g TMUX_CONF_LOCAL /etc/tmux.conf.local
       # 插件管理器路径: 指向可写位置, 避免 gpakosz 试图写入只读的 store。
-      set-environment -g TMUX_PLUGIN_MANAGER_PATH /Users/dok4ever/.tmux/plugins
+      set-environment -g TMUX_PLUGIN_MANAGER_PATH ${shared.home}/.tmux/plugins
 
       # ── 2. 加载 gpakosz/.tmux ──────────────────────────────────────
       # 直接从 nix store 引用, 只读, 免安装。

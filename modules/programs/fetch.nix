@@ -1,6 +1,8 @@
 { config, lib, pkgs, inputs, ... }:
 
 let
+  shared = import ../lib.nix { };
+
   # Replicate the upstream home-manager module's config generator:
   # https://github.com/areofyl/fetch/blob/5297ad4/nix/home-module.nix
   #
@@ -61,19 +63,18 @@ in
   # ── ~/.config/fetch/config ──────────────────────────────────────────
   # nix-darwin activation runs as root. There is no user-activation
   # surface any more (removed in nix-darwin ≥ 2024), so create the XDG
-  # config path as root and chown to dok4ever.
+  # config path as root and chown to the primary user.
   system.activationScripts.fetch = {
     # Run after /etc is materialised but before the final symlink swap.
     deps = [ "etc" ];
     text = ''
-      FETCH_HOME=/Users/dok4ever
-      install -d -m 0755 -o dok4ever -g staff "$FETCH_HOME/.config"
-      install -d -m 0755 -o dok4ever -g staff "$FETCH_HOME/.config/fetch"
+      install -d -m 0755 -o ${shared.username} -g staff ${shared.home}/.config
+      install -d -m 0755 -o ${shared.username} -g staff ${shared.home}/.config/fetch
       # `install` follows symlinks (would try to write into the read-only
       # nix-store target of the old HM link). Remove any existing file or
       # symlink first, then install a fresh regular file.
-      rm -f "$FETCH_HOME/.config/fetch/config"
-      install -m 0644 -o dok4ever -g staff ${fetchConfig} "$FETCH_HOME/.config/fetch/config"
+      rm -f ${shared.home}/.config/fetch/config
+      install -m 0644 -o ${shared.username} -g staff ${fetchConfig} ${shared.home}/.config/fetch/config
     '';
   };
 }

@@ -29,16 +29,9 @@
       specialArgs = { inherit inputs unstable; };
 
       modules = [
-        ./modules/direnv.nix
-        ./modules/homebrew.nix
-        ./modules/system-packages.nix
-        ./modules/nix-settings.nix
-        ./modules/activation.nix
-        ./modules/ssh-config-fix.nix
-        ./modules/shell.nix
-        ./modules/fetch.nix
-        ./modules/elm.nix
-        ./modules/tmux.nix
+        # All sub-modules are aggregated in modules/default.nix
+        # (overlays → system → shell → programs → fixes).
+        ./modules
 
         # Set Git commit hash for darwin-version (needs `self`, so lives here).
         { system.configurationRevision = self.rev or self.dirtyRev or null; }

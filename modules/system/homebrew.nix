@@ -1,17 +1,18 @@
 { config, pkgs, ... }:
 
-{
+let shared = import ../lib.nix { };
+in {
   # Homebrew activation runs as the primary (non-root) user.
-  system.primaryUser = "dok4ever";
+  system.primaryUser = shared.username;
 
   # ── Homebrew as a nix-darwin-controlled backend ─────────────────────
   # Nix is the control plane; Homebrew only carries things that nixpkgs
   # cannot (or cannot with the required feature set):
   #   - ffmpeg-full / imagemagick-full: Homebrew "full" variants with the
   #     complete codec / delegate matrix (keg-only; their opt/bin is
-  #     prepended to PATH in shell.nix so the full builds win).
+  #     prepended to PATH in shell/env.nix so the full builds win).
   #   - Casks: GUI apps, fonts and the BasicTeX pkg installer.
-  # Everything else (CLI tools) lives in nixpkgs — see system-packages.nix.
+  # Everything else (CLI tools) lives in nixpkgs — see system/packages.nix.
   #
   # Day-to-day usage: run `darwin-rebuild switch`, not `brew install`.
   # Home-manager is intentionally NOT used (user decision, permanent).

@@ -1,6 +1,7 @@
 { config, pkgs, ... }:
 
-{
+let shared = import ../lib.nix { };
+in {
   # Necessary for using flakes on this system.
   nix.settings.experimental-features = "nix-command flakes";
 
@@ -13,20 +14,13 @@
   # 默认: substituters = mkAfter [ "https://cache.nixos.org/" ]
   #       trusted-public-keys = [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ]
   #       trusted-users = [ "root" ]
-  nix.settings.trusted-users = [ "dok4ever" ];
+  nix.settings.trusted-users = [ shared.username ];
 
   # ── Proxy for nix-daemon ────────────────────────────────────────────
   # nix-daemon 是 root 常驻进程，从 launchd 启动时不继承 shell 代理变量，
   # 直连 cache.nixos.org 被墙。nix.envVars 是官方设计给 daemon 注入环境
   # 的入口：会写入 launchd daemon plist 的 EnvironmentVariables + 系统变量。
-  nix.envVars = {
-    http_proxy = "http://127.0.0.1:7890";
-    https_proxy = "http://127.0.0.1:7890";
-    HTTP_PROXY = "http://127.0.0.1:7890";
-    HTTPS_PROXY = "http://127.0.0.1:7890";
-    no_proxy = "localhost,127.0.0.1,::1,feishu.cn,.feishu.cn,larksuite.com,.larksuite.com";
-    NO_PROXY = "localhost,127.0.0.1,::1,feishu.cn,.feishu.cn,larksuite.com,.larksuite.com";
-  };
+  nix.envVars = shared.proxyEnv;
 
   # ── Auto GC: keep /nix/store bounded (encrypted APFS volume is small) ──
   # Per nixos-and-flakes.thiscute.world "Other useful Tips".

@@ -9,3 +9,4 @@ result
 
 # sensitive / local-only
 .DS_Store
+.pi/
