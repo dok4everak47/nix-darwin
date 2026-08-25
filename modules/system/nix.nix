@@ -1,6 +1,9 @@
-{ config, pkgs, ... }:
-
-let shared = import ../lib.nix { };
+{
+  config,
+  pkgs,
+  ...
+}: let
+  shared = import ../lib.nix {};
 in {
   # Necessary for using flakes on this system.
   nix.settings.experimental-features = "nix-command flakes";
@@ -14,7 +17,7 @@ in {
   # 默认: substituters = mkAfter [ "https://cache.nixos.org/" ]
   #       trusted-public-keys = [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ]
   #       trusted-users = [ "root" ]
-  nix.settings.trusted-users = [ shared.username ];
+  nix.settings.trusted-users = [shared.username];
 
   # ── Proxy for nix-daemon ────────────────────────────────────────────
   # nix-daemon 是 root 常驻进程，从 launchd 启动时不继承 shell 代理变量，
@@ -26,7 +29,11 @@ in {
   # Per nixos-and-flakes.thiscute.world "Other useful Tips".
   nix.gc = {
     automatic = true;
-    interval = { Weekday = 0; Hour = 3; Minute = 0; };  # Sun 03:00
+    interval = {
+      Weekday = 0;
+      Hour = 3;
+      Minute = 0;
+    }; # Sun 03:00
     options = "--delete-older-than 30d";
   };
 

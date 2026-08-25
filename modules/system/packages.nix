@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
-
 {
+  config,
+  pkgs,
+  ...
+}: {
   # Packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
   #
@@ -42,17 +44,17 @@
     opencode
 
     # ── Migrated from Homebrew ────────────────────────────────────────
-    antidote   # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
+    antidote # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
     cmake
-    delta      # git-delta
+    delta # git-delta
     jq
     lazygit
     nb
     ntfy
-    poppler-utils  # pdftotext, pdfinfo, ... (poppler is the GLib lib)
+    poppler-utils # pdftotext, pdfinfo, ... (poppler is the GLib lib)
     resvg
     ripgrep
-    _7zz       # 7-Zip CLI (binary is `7zz`; replaces brew sevenzip)
+    _7zz # 7-Zip CLI (binary is `7zz`; replaces brew sevenzip)
     socat
     zellij
   ];

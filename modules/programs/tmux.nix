@@ -1,7 +1,10 @@
-{ config, lib, pkgs, ... }:
-
-let
-  shared = import ../lib.nix { };
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
+  shared = import ../lib.nix {};
 
   # gpakosz/.tmux — 强大的 tmux 配置框架 (状态栏/主题/快捷键)
   # 固定 commit (2026-08-24 HEAD), sha256 由 nix-prefetch-url 计算。
@@ -11,8 +14,7 @@ let
     rev = "58a3dcc0d718ec0fa1c0d5a2fddd640a1ad7a5b7";
     sha256 = "0zky4qkndrs645xnxh6498zc8yj7y581sg72hh0h7b31a5jxng30";
   };
-in
-{
+in {
   # ── tmux (gpakosz 集成版) ─────────────────────────────────────────────
   # 本机 tmux 由 nix-darwin 的 wrapped 二进制提供（强制 -f /etc/tmux.conf）。
   # 配置来源：

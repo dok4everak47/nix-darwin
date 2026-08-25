@@ -20,13 +20,18 @@
     areofyl-fetch.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = inputs@{ self, nix-darwin, nixpkgs, unstable, areofyl-fetch }:
-  {
+  outputs = inputs @ {
+    self,
+    nix-darwin,
+    nixpkgs,
+    unstable,
+    areofyl-fetch,
+  }: {
     # Build darwin flake using:
     # $ darwin-rebuild switch --flake .#dok4ever-mac
     darwinConfigurations."dok4ever-mac" = nix-darwin.lib.darwinSystem {
       # Pass `inputs` to all modules so they can access overlay/input attrs.
-      specialArgs = { inherit inputs unstable; };
+      specialArgs = {inherit inputs unstable;};
 
       modules = [
         # All sub-modules are aggregated in modules/default.nix
@@ -34,7 +39,7 @@
         ./modules
 
         # Set Git commit hash for darwin-version (needs `self`, so lives here).
-        { system.configurationRevision = self.rev or self.dirtyRev or null; }
+        {system.configurationRevision = self.rev or self.dirtyRev or null;}
       ];
     };
   };

@@ -1,7 +1,9 @@
-{ config, pkgs, ... }:
-
-let
-  shared = import ../lib.nix { };
+{
+  config,
+  pkgs,
+  ...
+}: let
+  shared = import ../lib.nix {};
 in {
   # ── Interactive zsh init ─────────────────────────────────────────────
   # nix-darwin sources this in /etc/zshrc AFTER compinit setup; it runs

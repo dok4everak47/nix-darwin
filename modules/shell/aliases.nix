@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
-
 {
+  config,
+  pkgs,
+  ...
+}: {
   # ── Shell aliases ────────────────────────────────────────────────────
   # (was programs.zsh.shellAliases in HM)
   environment.shellAliases = {

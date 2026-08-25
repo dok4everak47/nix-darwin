@@ -1,6 +1,8 @@
-{ config, pkgs, ... }:
-
 {
+  config,
+  pkgs,
+  ...
+}: {
   # Add route to FreeBSD VM (UTM bridged mode).
   # Idempotent: only add if the route isn't already present.
   system.activationScripts.postActivation.text = ''

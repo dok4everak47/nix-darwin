@@ -5,9 +5,12 @@
 # the 2026-07-09 "shell" migration in the existing history.db. It is patched
 # for the search flag-swallowing bug (#3908). Once stable catches up (or a
 # fixed release lands), drop the atuin overlay and just use pkgs.atuin.
-{ config, pkgs, unstable, ... }:
-
 {
+  config,
+  pkgs,
+  unstable,
+  ...
+}: {
   nixpkgs.overlays = [
     # ── openmp: strip empty run-lit-directly.patch ─────────────────────
     # 2026-08-24: upstream 26.05's llvm openmp patch run-lit-directly.patch
@@ -16,7 +19,8 @@
     # imagemagick. An empty patch is a no-op anyway, so filter it out.
     (final: prev: {
       openmp = prev.openmp.overrideAttrs (old: {
-        patches = builtins.filter
+        patches =
+          builtins.filter
           (p: builtins.match ".*run-lit-directly.patch" (toString p) == null)
           (old.patches or []);
       });
@@ -34,16 +38,20 @@
     (final: prev: {
       opencode = prev.opencode.overrideAttrs (old: {
         dontStrip = true;
-        postPatch = (old.postPatch or "") + ''
-          substituteInPlace packages/opencode/script/build.ts \
-            --replace-fail "if (item.os === process.platform" \
-                          "if (false && item.os === process.platform"
-        '';
+        postPatch =
+          (old.postPatch or "")
+          + ''
+            substituteInPlace packages/opencode/script/build.ts \
+              --replace-fail "if (item.os === process.platform" \
+                            "if (false && item.os === process.platform"
+          '';
         doInstallCheck = false;
         postInstall = "";
-        postFixup = (old.postFixup or "") + ''
-          /usr/bin/codesign --force --sign - "$out/bin/.opencode-wrapped"
-        '';
+        postFixup =
+          (old.postFixup or "")
+          + ''
+            /usr/bin/codesign --force --sign - "$out/bin/.opencode-wrapped"
+          '';
       });
     })
 
@@ -56,8 +64,8 @@
     (final: prev: {
       atuin = (unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.atuin)
         .overrideAttrs (old: {
-          patches = (old.patches or []) ++ [ ../../atuin-fix-search-hyphen.patch ];
-        });
+        patches = (old.patches or []) ++ [../../atuin-fix-search-hyphen.patch];
+      });
     })
   ];
 }

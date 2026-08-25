@@ -1,6 +1,9 @@
-{ config, pkgs, ... }:
-
-let shared = import ../lib.nix { };
+{
+  config,
+  pkgs,
+  ...
+}: let
+  shared = import ../lib.nix {};
 in {
   # Homebrew activation runs as the primary (non-root) user.
   system.primaryUser = shared.username;
@@ -22,13 +25,16 @@ in {
 
     # forel cask lives in the lab421 tap.
     taps = [
-      { name = "lab421/tap"; trusted = true; }
+      {
+        name = "lab421/tap";
+        trusted = true;
+      }
     ];
 
     brews = [
       # Full feature sets — required; do NOT replace with nixpkgs ffmpeg/imagemagick.
-      { name = "ffmpeg-full"; }
-      { name = "imagemagick-full"; }
+      {name = "ffmpeg-full";}
+      {name = "imagemagick-full";}
     ];
 
     casks = [

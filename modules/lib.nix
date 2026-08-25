@@ -3,9 +3,7 @@
 #   let shared = import ../lib.nix { inherit pkgs; };
 # or from a file directly under modules/:
 #   let shared = import ./lib.nix { };
-{ }:
-
-rec {
+{}: rec {
   # ── Identity ────────────────────────────────────────────────────────
   username = "dok4ever";
   home = "/Users/${username}";

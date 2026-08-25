@@ -1,7 +1,9 @@
-{ config, pkgs, ... }:
-
-let
-  shared = import ../lib.nix { };
+{
+  config,
+  pkgs,
+  ...
+}: let
+  shared = import ../lib.nix {};
   home = shared.home;
 in {
   # ── Project-specific shell functions ─────────────────────────────────

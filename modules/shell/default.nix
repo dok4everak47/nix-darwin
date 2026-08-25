@@ -1,7 +1,9 @@
-{ config, pkgs, ... }:
-
-let
-  shared = import ../lib.nix { };
+{
+  config,
+  pkgs,
+  ...
+}: let
+  shared = import ../lib.nix {};
 in {
   # ── Zsh (nix-darwin writes /etc/{zshenv,zprofile,zshrc}) ────────────
   # Autosuggestions + syntax-highlighting + fzf-tab come from antidote
