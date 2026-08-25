@@ -42,6 +42,7 @@
     zed-editor
     mdcat
     opencode
+    nix-search-cli
 
     # ── Migrated from Homebrew ────────────────────────────────────────
     antidote # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
