@@ -135,5 +135,34 @@ in {
           rime-reload
       )
     }
+
+    # tmux-left-2-right-1: Create the standard 3-pane workspace layout
+    # Layout:
+    # ┌──────────────┬──────────────┐
+    # │      1       │              │
+    # ├──────────────┤      3       │
+    # │      2       │              │
+    # └──────────────┴──────────────┘
+    # Left: 2 panes stacked vertically; Right: 1 pane full-height
+    tmux-workspace() {
+      # Only works inside tmux
+      if [ -z "$TMUX" ]; then
+        echo "✖ Error: must be run inside tmux" >&2
+        return 1
+      fi
+
+      # Step 1: Split horizontally, create right pane (50% width)
+      tmux split-window -h -c "#{pane_current_path}"
+
+      # Step 2: Go back to left pane, split vertically, create bottom pane
+      tmux select-pane -L
+      tmux split-window -v -c "#{pane_current_path}"
+
+      # Step 3: Select the top-left pane (pane 1) - reasonable default
+      tmux select-pane -U
+
+      echo "✓ Created tmux 3-pane workspace layout"
+    }
+    alias tws='tmux-workspace'
   '';
 }
