@@ -45,6 +45,7 @@
     nix-search-cli
     cliamp
     pi-coding-agent
+    cinny-desktop
 
     # ── Migrated from Homebrew ────────────────────────────────────────
     antidote # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
