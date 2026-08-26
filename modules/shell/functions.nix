@@ -113,5 +113,27 @@ in {
         echo "✓ rebuilt and restarted com.dsh.web (port 3080)"
       )
     }
+
+    # Rime/Squirrel redeploy. Triggers Squirrel to rebuild its build/ cache
+    # from ~/Library/Rime/*.yaml (same as clicking 鼠须管 → Deploy).
+    rime-reload() {
+      local squirrel_bin="/Library/Input Methods/Squirrel.app/Contents/MacOS/Squirrel"
+      if [ ! -x "$squirrel_bin" ]; then
+        echo "✖ Squirrel not found at $squirrel_bin" >&2
+        return 1
+      fi
+      "$squirrel_bin" --reload && echo "✓ Rime redeployed" || echo "✖ redeploy failed (check ~/Library/Rime/build/ for errors)" >&2
+    }
+    alias rime-deploy='rime-reload'
+
+    # Full Rime redeploy: rebuild nix-darwin then reload Squirrel
+    rime-redeploy() {
+      (
+        cd /etc/nix-darwin || exit 1
+        https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890 \
+          sudo darwin-rebuild switch --flake .#dok4ever-mac && \
+          rime-reload
+      )
+    }
   '';
 }

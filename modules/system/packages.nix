@@ -44,6 +44,7 @@
     opencode
     nix-search-cli
     cliamp
+    pi-coding-agent
 
     # ── Migrated from Homebrew ────────────────────────────────────────
     antidote # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
