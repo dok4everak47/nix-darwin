@@ -53,7 +53,7 @@ in {
       # 插件管理器路径: 指向可写位置, 避免 gpakosz 试图写入只读的 store。
       set-environment -g TMUX_PLUGIN_MANAGER_PATH ${shared.home}/.tmux/plugins
 
-      # ── 2. 加载 gpakosz/.tmux ──────────────────────────────────────
+      # ── 2. 加载 gpakosz ──────────────────────────────────────
       # 直接从 nix store 引用, 只读, 免安装。
       source-file ${gpakoszTmux}/.tmux.conf
 
