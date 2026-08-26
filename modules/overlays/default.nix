@@ -67,5 +67,10 @@
         patches = (old.patches or []) ++ [../../atuin-fix-search-hyphen.patch];
       });
     })
+
+    # ── pi-coding-agent: use unstable version instead of 26.05 stable ───
+    (final: prev: {
+      pi-coding-agent = unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.pi-coding-agent;
+    })
   ];
 }
