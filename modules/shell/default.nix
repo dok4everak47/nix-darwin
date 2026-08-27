@@ -32,8 +32,12 @@ in {
   # ── User packages that lived in home.packages under HM ─────────────
   # atuin is provided by the overlay in modules/overlays/ (patched unstable);
   # it must be on PATH because `atuin init` emits a bare `atuin` call.
+  # fzf MUST be on PATH too: plugins.nix sources fzf's key-bindings by absolute
+  # path, but fzf-tab and zoxide's interactive `zi`/space-Tab invoke the bare
+  # `fzf` binary at runtime. Without this it silently does nothing on Tab.
   environment.systemPackages = [
     pkgs.zoxide
     pkgs.atuin
+    pkgs.fzf
   ];
 }
