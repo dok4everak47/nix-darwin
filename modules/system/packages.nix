@@ -45,6 +45,7 @@
     nix-search-cli
     cliamp
     pi-coding-agent
+    herdr
     cinny-desktop
 
     # ── Migrated from Homebrew ────────────────────────────────────────

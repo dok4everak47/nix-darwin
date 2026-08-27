@@ -9,6 +9,7 @@
   config,
   pkgs,
   unstable,
+  nixos-unstable,
   ...
 }: {
   nixpkgs.overlays = [
@@ -71,6 +72,14 @@
     # ── pi-coding-agent: use unstable version instead of 26.05 stable ───
     (final: prev: {
       pi-coding-agent = unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.pi-coding-agent;
+    })
+
+    # ── herdr: use nixos-unstable version instead of 26.05 stable ─────
+    # 0.8.2 ("Agent multiplexer that lives in your terminal"); not in 26.05
+    # stable. The atuin-pinned `unstable` input only has 0.7.5, so track the
+    # rolling nixos-unstable channel (locked in flake.lock) for 0.8.2.
+    (final: prev: {
+      herdr = nixos-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.herdr;
     })
   ];
 }

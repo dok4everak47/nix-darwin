@@ -13,6 +13,12 @@
     # 18.17.1 is patched for search bug #3908 in modules/overlays/default.nix.
     unstable.url = "github:NixOS/nixpkgs/6f6fca055bb8d39ccd3e3be1e27d8b58b9a442d1";
 
+    # herdr (agent multiplexer, 0.8.2) is not in 26.05 stable, and the
+    # atuin-pinned `unstable` rev above only has 0.7.5. Track the rolling
+    # nixos-unstable channel (locked in flake.lock, reproducible) for 0.8.2.
+    # Separate input so atuin's pinned rev stays untouched.
+    nixos-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+
     # fetch (animated 3D fetch tool) -- https://github.com/areofyl/fetch
     # Pinned to rev 5297ad4 (HEAD as of 2026-08-21). Upstream flake uses
     # nixos-unstable; follow our nixpkgs to avoid pulling a second copy.
@@ -25,6 +31,7 @@
     nix-darwin,
     nixpkgs,
     unstable,
+    nixos-unstable,
     areofyl-fetch,
   }: {
     # Build darwin flake using:
@@ -35,7 +42,7 @@
         # Only expose what modules actually consume, not the whole input set:
         #   - unstable  → overlays (atuin 18.17.1)
         #   - areofyl-fetch → programs/fetch.nix
-        inherit unstable;
+        inherit unstable nixos-unstable;
         areofyl-fetch = inputs.areofyl-fetch;
       };
 
