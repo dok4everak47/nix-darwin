@@ -28,8 +28,9 @@ in {
     # zsh 默认补全大小写敏感；这里让小写也能匹配大写(cd doc → Documents)
     zstyle ':completion:*' matcher-list 'm:{a-zA-z}={A-Za-z}'
 
-    # Initialize completion system first so compdef exists for all plugins
-    autoload -U compinit && compinit
+    # Initialize completion system first so `compdef` command exists for all plugins
+    autoload -U compinit
+    compinit
 
     source ~/.zsh_plugins.zsh
     # bun completions
