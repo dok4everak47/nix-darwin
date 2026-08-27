@@ -28,11 +28,6 @@ in {
     # zsh 默认补全大小写敏感；这里让小写也能匹配大写(cd doc → Documents)
     zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 
-    # compinit MUST run before sourcing plugins: oh-my-zsh plugins (e.g. git)
-    # call `compdef` at load time. nix-darwin runs its own compinit at the end
-    # of /etc/zshrc (after interactiveShellInit), which is too late.
-    autoload -U compinit && compinit
-
     source ~/.zsh_plugins.zsh
     # bun completions
     [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
@@ -48,5 +43,9 @@ in {
 
     # ── atuin (replaces HM programs.atuin.enableZshIntegration) ────
     eval "$(${pkgs.atuin}/bin/atuin init zsh)"
+
+    # compinit MUST run after all plugins/inits that call `compdef`
+    # (zoxide, fzf, atuin, oh-my-zsh plugins) to register all completions
+    autoload -U compinit && compinit
   '';
 }
