@@ -1,3 +1,4 @@
+
 {
   config,
   pkgs,
@@ -106,12 +107,60 @@ in {
     # Rebuilds the dsh-web-ui packages (which are symlinked into the profile)
     # and restarts the 3080 service. Does NOT touch git, pnpm install, or
     # deepseek-harness. Use after editing local dsh-web-ui code.
+    # Supports interactive branch selection just like dsh-web-ui-update.
     dsh-web-reload() {
       (
         cd ${home}/Project/dsh-web-ui || exit 1
+
+        # List all local branches if more than one
+        local branches=($(git branch --format="%(refname:short)"))
+        if [[ $#branches -gt 1 ]]; then
+          echo "Available local branches:"
+          for (( i=1; i<=$#branches; i++ )); do
+            echo "  $i) $branches[$i]"
+          done
+          # Ask user selection
+          echo -n "Enter number to select branch (enter for current branch '$(git rev-parse --abbrev-ref HEAD)'): "
+          read -r sel
+
+          if [ -n "$sel" ]; then
+            if ! [[ "$sel" =~ ^[0-9]+$ ]] || [ "$sel" -lt 1 ] || [ "$sel" -gt "$#branches" ]; then
+              echo "Invalid selection, abort" >&2
+              exit 1
+            fi
+            local branch="$branches[$sel]"
+            git checkout "$branch" || exit 1
+          fi
+        fi
+
         pnpm run build || { echo "✖ build failed" >&2; exit 1; }
+        # Re-link @linxin666 packages (just in case any new packages were added)
+        local profile_nm="$HOME/.dsh/profiles/web/node_modules/@linxin666"
+        [ -d "$profile_nm" ] && {
+          rm -f "$profile_nm"/dsh-client-ui-aionui-panel "$profile_nm"/dsh-chat-recovery "$profile_nm"/dsh-client-ui-community-plugins "$profile_nm"/dsh-desktop-launcher "$profile_nm"/dsh-doctor "$profile_nm"/dsh-client-ui-git-graph "$profile_nm"/dsh-liangshen "$profile_nm"/dsh-client-ui-market "$profile_nm"/dsh-pet "$profile_nm"/dsh-client-ui-plugin-manager "$profile_nm"/dsh-remote-web-ui "$profile_nm"/dsh-client-ui-session-id "$profile_nm"/dsh-client-ui-skill-explorer "$profile_nm"/dsh-ssh "$profile_nm"/dsh-client-ui-task-board "$profile_nm"/dsh-tool-describe-image "$profile_nm"/dsh-web-all "$profile_nm"/dsh-client-ui-turn-nav "$profile_nm"/dsh-client-ui-web-ui-settings
+          ln -sf "$PWD/packages/dsh-aionui-panel"             "$profile_nm"/dsh-client-ui-aionui-panel
+          ln -sf "$PWD/packages/dsh-chat-recovery"            "$profile_nm"/dsh-chat-recovery
+          ln -sf "$PWD/packages/dsh-community-plugins"        "$profile_nm"/dsh-client-ui-community-plugins
+          ln -sf "$PWD/packages/dsh-desktop-launcher"         "$profile_nm"/dsh-desktop-launcher
+          ln -sf "$PWD/packages/dsh-doctor"                   "$profile_nm"/dsh-doctor
+          ln -sf "$PWD/packages/dsh-git-graph"                "$profile_nm"/dsh-client-ui-git-graph
+          ln -sf "$PWD/packages/dsh-liangshen"                "$profile_nm"/dsh-liangshen
+          ln -sf "$PWD/packages/dsh-market"                   "$profile_nm"/dsh-client-ui-market
+          ln -sf "$PWD/packages/dsh-pet"                      "$profile_nm"/dsh-pet
+          ln -sf "$PWD/packages/dsh-plugin-manager"           "$profile_nm"/dsh-client-ui-plugin-manager
+          ln -sf "$PWD/packages/dsh-remote-web-ui"            "$profile_nm"/dsh-remote-web-ui
+          ln -sf "$PWD/packages/dsh-session-id"               "$profile_nm"/dsh-client-ui-session-id
+          ln -sf "$PWD/packages/dsh-skill-explorer"           "$profile_nm"/dsh-client-ui-skill-explorer
+          ln -sf "$PWD/packages/dsh-ssh"                      "$profile_nm"/dsh-ssh
+          ln -sf "$PWD/packages/dsh-task-board"               "$profile_nm"/dsh-client-ui-task-board
+          ln -sf "$PWD/packages/dsh-tool-describe-image"      "$profile_nm"/dsh-tool-describe-image
+          ln -sf "$PWD/packages/dsh-web-all"                  "$profile_nm"/dsh-web-all
+          ln -sf "$PWD/packages/turn-nav"                     "$profile_nm"/dsh-client-ui-turn-nav
+          ln -sf "$PWD/packages/dsh-web-settings"             "$profile_nm"/dsh-client-ui-web-ui-settings
+        }
+
         launchctl kickstart -k "gui/$(id -u)/com.dsh.web"
-        echo "✓ rebuilt and restarted com.dsh.web (port 3080)"
+        echo "✓ rebuilt and restarted com.dsh.web (port 3080) on branch '$(git rev-parse --abbrev-ref HEAD)'"
       )
     }
 
