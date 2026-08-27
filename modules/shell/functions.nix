@@ -215,4 +215,4 @@ in {
     }
     alias tws='tmux-workspace'
   '';
-};
+}
