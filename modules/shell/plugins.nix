@@ -70,6 +70,17 @@ in {
     # Load antidote plugins (fzf-tab, autosuggestions, ...). They need compdef.
     # fzf-tab wraps Tab here (fzf keybindings are already loaded above).
     [ -s ~/.zsh_plugins.zsh ] && source ~/.zsh_plugins.zsh
+
+    # ── zsh-vi-mode: re-apply fzf bindings clobbered by zvm init ─────
+    # zsh-vi-mode defers init to the first prompt (precmd_functions+=zvm_init,
+    # verified in source) and then OVERWRITES all prior keybindings — which
+    # kills the fzf ^T/^R/Alt-C bindings sourced before the bundle above.
+    # README's official fix: re-source them from the after-init hook.
+    # Safe for fzf-tab: key-bindings.zsh only binds ^T/\ec/^R, never Tab.
+    # (zvm declares these arrays without resetting them at source time, so
+    # appending here — after the bundle — is the documented pattern.)
+    zvm_after_init_commands+=('source ${pkgs.fzf}/share/fzf/key-bindings.zsh')
+
     # bun completions
     [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
