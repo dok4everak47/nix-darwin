@@ -39,5 +39,10 @@ in {
     pkgs.zoxide
     pkgs.atuin
     pkgs.fzf
+
+    # Batch `exec zsh` for herdr shell panes after a rebuild (skips nvim /
+    # agent panes via foreground-process check). Source: herdr-reload-shells.sh
+    # next to this file; writeShellScriptBin gives it nixpkgs bash (mapfile OK).
+    (pkgs.writeShellScriptBin "herdr-reload-shells" (builtins.readFile ./herdr-reload-shells.sh))
   ];
 }
