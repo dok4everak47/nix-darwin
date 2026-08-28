@@ -81,5 +81,10 @@
     (final: prev: {
       herdr = nixos-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.herdr;
     })
+
+    # codex : use unstable version
+    (final: prev: {
+      codex = nixos-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.codex;
+    })
   ];
 }
