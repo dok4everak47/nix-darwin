@@ -214,5 +214,36 @@ in {
       echo "✓ Created tmux 3-pane workspace layout"
     }
     alias tws='tmux-workspace'
+
+    # nix-template / nt: interactively scaffold a flake devShell + direnv
+    # into the current directory. Templates live in /etc/nix-darwin/templates/*
+    # and are exposed via the nix-darwin flake `templates` output.
+    #   $ cd ~/dev/myapp && nt          # fzf-pick a template
+    #   $ nt python                     # skip the picker, use a named one
+    # After init, runs `direnv allow` so the env auto-loads on cd.
+    # Requires: template files git-tracked in the nix-darwin repo (git flakes
+    # only expose tracked files), and direnv + nix-direnv (already enabled).
+    nix-template() {
+      local tpl_dir="/etc/nix-darwin/templates"
+      if [ ! -d "$tpl_dir" ]; then
+        echo "✖ templates dir not found: $tpl_dir" >&2
+        return 1
+      fi
+      local name="$1"
+      if [ -z "$name" ]; then
+        name=$(ls -1 "$tpl_dir" | fzf --prompt="Select template> " --height=40%) || { echo "Aborted"; return 1; }
+      fi
+      if [ ! -d "$tpl_dir/$name" ]; then
+        echo "✖ no such template: $name (available: $(ls -1 "$tpl_dir" | tr '\n' ' '))" >&2
+        return 1
+      fi
+      nix flake init -t "/etc/nix-darwin#$name" || { echo "✖ nix flake init failed" >&2; return 1; }
+      if [ -f .envrc ]; then
+        direnv allow && echo "✓ scaffolded '$name' + direnv enabled"
+      else
+        echo "✓ scaffolded '$name' (no .envrc)"
+      fi
+    }
+    alias nt='nix-template'
   '';
 }

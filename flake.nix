@@ -57,5 +57,35 @@
         {system.configurationRevision = self.rev or self.dirtyRev or null;}
       ];
     };
+
+    # ── Project templates ───────────────────────────────────────────────
+    # Scaffold a flake-based devShell + direnv into a new project dir:
+    #   $ cd ~/dev/myapp && nix flake init -t /etc/nix-darwin#python
+    #   $ direnv allow
+    # Or use the `nt` interactive (fzf) selector in modules/shell/functions.nix.
+    # NOTE: template files must be `git add`-ed in this repo before
+    # `nix flake init -t` can see them (git flakes only expose tracked files).
+    templates = {
+      python = {
+        path = ./templates/python;
+        description = "Python + uv + ruff devShell";
+      };
+      node = {
+        path = ./templates/node;
+        description = "Node.js + pnpm devShell";
+      };
+      go = {
+        path = ./templates/go;
+        description = "Go + gopls devShell";
+      };
+      rust = {
+        path = ./templates/rust;
+        description = "Rust toolchain devShell";
+      };
+      elm = {
+        path = ./templates/elm;
+        description = "Elm 0.19 compiler + tooling devShell";
+      };
+    };
   };
 }
