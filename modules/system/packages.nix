@@ -47,6 +47,7 @@
     pi-coding-agent
     herdr
     cinny-desktop
+    codex
 
     # ── Migrated from Homebrew ────────────────────────────────────────
     antidote # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
