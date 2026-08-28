@@ -48,6 +48,7 @@
     herdr
     cinny-desktop
     codex
+    yt-dlp
 
     # ── Migrated from Homebrew ────────────────────────────────────────
     antidote # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
