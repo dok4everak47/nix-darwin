@@ -33,7 +33,6 @@ in {
 
     brews = [
       # Full feature sets — required; do NOT replace with nixpkgs ffmpeg/imagemagick.
-      {name = "ffmpeg-full";}
       {name = "imagemagick-full";}
     ];
 
