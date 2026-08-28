@@ -23,11 +23,14 @@ in {
   # Re-asserted in plugins.nix interactiveShellInit after `brew shellenv`.
   programs.zsh.shellInit = shared.pathInit;
 
-  # ── Prompt: starship ─────────────────────────────────────────────────
-  # (replaces HM programs.starship.enableZshIntegration)
-  programs.zsh.promptInit = ''
-    eval "$(${pkgs.starship}/bin/starship init zsh)"
-  '';
+  # ── Prompt: pure (sindresorhus/pure) ─────────────────────────────────
+  # pure self-activates via antidote in plugins.nix (interactiveShellInit):
+  # the bundle sources pure.plugin.zsh, which ends with prompt_pure_setup.
+  # IMPORTANT: nix-darwin's zsh module ships a DEFAULT promptInit that runs
+  # `prompt suse`, and it runs AFTER interactiveShellInit in /etc/zshrc -
+  # so if left enabled it would clobber pure's PROMPT. Override to empty
+  # here. starship removed 2026-08.
+  programs.zsh.promptInit = "";
 
   # ── User packages that lived in home.packages under HM ─────────────
   # atuin is provided by the overlay in modules/overlays/ (patched unstable);

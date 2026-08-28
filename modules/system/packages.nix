@@ -6,8 +6,8 @@
   # Packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
   #
-  # 2026-08: starship init 通过 programs.zsh.promptInit 接入；fzf/atuin
-  # 安装在 modules/shell/；direnv 由 programs.direnv.enable 自动提供;
+  # 2026-08: prompt 改用 sindresorhus/pure (经 antidote 加载,见 modules/shell/)；
+  # fzf/atuin 安装在 modules/shell/；direnv 由 programs.direnv.enable 自动提供;
   # taskwarrior3/taskwarrior-tui/vit 已迁移 htask, 遗留已删。
   #
   # tmux (2026-08): moved to modules/programs/tmux.nix — programs.tmux.enable

@@ -71,6 +71,12 @@ in {
     # fzf-tab wraps Tab here (fzf keybindings are already loaded above).
     [ -s ~/.zsh_plugins.zsh ] && source ~/.zsh_plugins.zsh
 
+    # ── Prompt: pure (sindresorhus/pure, via antidote bundle above) ──
+    # pure.plugin.zsh (sourced by the bundle) ends with `prompt_pure_setup`
+    # so it self-activates - NO promptinit/`prompt pure` (that would
+    # double-register precmd/preexec hooks). Replaces starship (see
+    # modules/shell/default.nix).
+
     # ── zsh-vi-mode: re-apply fzf bindings clobbered by zvm init ─────
     # zsh-vi-mode defers init to the first prompt (precmd_functions+=zvm_init,
     # verified in source) and then OVERWRITES all prior keybindings — which
