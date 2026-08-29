@@ -52,21 +52,19 @@ in {
       # prefix converges to the config. Use "zap" to also purge cask
       # prefs/caches.
       cleanup = "uninstall";
-      # Personal, single-user machine: also refresh formulae metadata and
-      # upgrade declared packages during rebuild, so `darwin-rebuild switch`
-      # is the one command for both config and brew updates. Trades strict
-      # idempotence/reproducibility for convenience (fine on a laptop).
-      autoUpdate = true;
-      upgrade = true;
+      # Idempotent rebuilds (2026-08-29): autoUpdate/upgrade disabled so
+      # `darwin-rebuild switch` never touches brew unless a declared
+      # package is missing. Upgrade manually when wanted:
+      #   brew update && brew upgrade
+      autoUpdate = false;
+      upgrade = false;
     };
 
     global = {
       # Point manual `brew bundle` at the generated, store-backed Brewfile.
       brewfile = true;
       # Suppress Homebrew's own auto-update when you run brew commands by
-      # hand. Note: during `darwin-rebuild`, onActivation.autoUpdate=true
-      # still updates/upgrades the declared packages; this only governs
-      # ad-hoc `brew install`/`brew upgrade` typed in a terminal.
+      # hand. Upgrade explicitly with `brew update && brew upgrade`.
       autoUpdate = false;
     };
   };
