@@ -24,6 +24,14 @@
     # nixos-unstable; follow our nixpkgs to avoid pulling a second copy.
     areofyl-fetch.url = "github:areofyl/fetch/5297ad46acf2afb676ddc56aa8f278bd591fb9e6";
     areofyl-fetch.inputs.nixpkgs.follows = "nixpkgs";
+
+    # AI coding agents (claude-code, gemini-cli, qwen-code, ...) from
+    # numtide/llm-agents.nix. Built against its OWN pinned nixpkgs-unstable --
+    # deliberately NOT `follows = "nixpkgs"`: README warns that following a
+    # stable branch (our nixos-26.05) breaks eventually. Costs a second
+    # nixpkgs eval but ships the CI-tested combo + prebuilt binaries
+    # (when the numtide cache is trusted -- see modules/system/nix.nix).
+    llm-agents.url = "github:numtide/llm-agents.nix";
   };
 
   outputs = inputs @ {
@@ -33,6 +41,7 @@
     unstable,
     nixos-unstable,
     areofyl-fetch,
+    llm-agents,
   }: {
     # Build darwin flake using:
     # $ darwin-rebuild switch --flake .#dok4ever-mac
@@ -42,8 +51,10 @@
         # Only expose what modules actually consume, not the whole input set:
         #   - unstable  → overlays (atuin 18.17.1)
         #   - areofyl-fetch → programs/fetch.nix
+        #   - llm-agents → system/packages.nix (AI coding agents)
         inherit unstable nixos-unstable;
         areofyl-fetch = inputs.areofyl-fetch;
+        llm-agents = inputs.llm-agents;
       };
 
       modules = [
