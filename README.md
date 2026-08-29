@@ -8,7 +8,6 @@ My personal [nix-darwin](https://github.com/LnL7/nix-darwin) configuration for A
 - **Zsh configuration**: Managed via nix-darwin, with common plugins and custom functions
 - **Tmux**: Vi key bindings, 3-pane workspace layout, fixed split direction
 - **Elm development**: Project-level isolated environment via `direnv + flake`, no global compiler conflict
-- **Custom dock icons**: Vendored `ryanccn/nix-darwin-custom-icons` module for easier maintenance
 - **Common CLI tools**: Pre-configured daily-use cli tools
 
 ## Structure
