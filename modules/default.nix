@@ -24,6 +24,7 @@
     # ── Programs ───────────────────────────────────────────────────────
     ./programs/direnv.nix
     ./programs/elm.nix
+    ./programs/rust.nix
     ./programs/tmux.nix
     ./programs/fetch.nix
 
