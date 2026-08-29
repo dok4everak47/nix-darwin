@@ -11,9 +11,11 @@ in {
   # ── Homebrew as a nix-darwin-controlled backend ─────────────────────
   # Nix is the control plane; Homebrew only carries things that nixpkgs
   # cannot (or cannot with the required feature set):
-  #   - ffmpeg-full / imagemagick-full: Homebrew "full" variants with the
-  #     complete codec / delegate matrix (keg-only; their opt/bin is
-  #     prepended to PATH in shell/env.nix so the full builds win).
+  #   - imagemagick-full: Homebrew "full" variant with the complete
+  #     delegate matrix (keg-only; opt/bin is prepended to PATH in
+  #     shell/env.nix so the full build wins). ffmpeg-full was removed
+  #     2026-08 (unused) — do not re-add unless a project needs full
+  #     codec support not in nixpkgs ffmpeg.
   #   - Casks: GUI apps, fonts and the BasicTeX pkg installer.
   # Everything else (CLI tools) lives in nixpkgs — see system/packages.nix.
   #
@@ -32,7 +34,7 @@ in {
     ];
 
     brews = [
-      # Full feature sets — required; do NOT replace with nixpkgs ffmpeg/imagemagick.
+      # Full feature set — required; do NOT replace with nixpkgs imagemagick.
       {name = "imagemagick-full";}
     ];
 

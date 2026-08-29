@@ -1,18 +1,14 @@
 {
-  config,
-  pkgs,
-  ...
-}: {
-  # ── Rust 语言工具链 (2026-08-29) ──────────────────────────────────────────
-  # 系统级安装 Rust 工具链，rustaceanvim (nvim) 从 PATH 调用 rust-analyzer
-  # 提供补全/诊断/跳转，rustfmt 提供保存时格式化，clippy 作为
-  # rust-analyzer 的 check.command。项目级多版本/nightly 切换由各项目
-  # flake devShell + direnv 负责，此处只装一份稳定基线工具链。
-  environment.systemPackages = [
-    pkgs.rustc # 编译器
-    pkgs.cargo # 包管理器 / 构建工具
-    pkgs.rustfmt # 代码格式化 (rustaceanvim format_on_save 依赖)
-    pkgs.clippy # Linter (rust-analyzer check.command=clippy 依赖)
-    pkgs.rust-analyzer # LSP 服务端（nvim 补全/诊断/跳转依赖）
-  ];
+  # ── Rust 语言工具链 (2026-08-29 清理) ──────────────────────────────
+  # 已移除全局安装：rust 工具链（rustc/cargo/rustfmt/clippy/rust-analyzer）
+  # 全部走项目 flake devShell + direnv。
+  #
+  # 原因（2026-08-29 高温病根）：
+  #   系统 profile 的 rust-analyzer 2026-06-01 在 PATH 中优先于项目
+  #   devShell 的 rust-overlay 1.98.0，且 FSEvents 监听 .direnv/ 触发
+  #   reindex 风暴 → 单核 95% 持续高温。
+  #   移除后：任何 Rust 项目内由 devShell 提供工具链，无 PATH 冲突。
+  #
+  # 项目模板: templates/rust/flake.nix（rust-overlay，版本随项目锁）。
+  # 新建项目: nix flake init -t /etc/nix-darwin#rust 或 new-rust-proj.sh
 }

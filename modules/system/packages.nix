@@ -14,8 +14,9 @@
   # tmux (2026-08): moved to modules/programs/tmux.nix — programs.tmux.enable
   # ships a wrapped tmux (-f /etc/tmux.conf); a bare pkgs.tmux here would collide.
   # Homebrew takeover (2026-08): CLI tools migrated here from brew.
-  # ffmpeg-full / imagemagick-full stay on Homebrew (full feature set),
-  # managed in modules/system/homebrew.nix and prioritized in shell PATH.
+  # imagemagick-full stays on Homebrew (full feature set), managed in
+  # modules/system/homebrew.nix and prioritized in shell PATH.
+  # (ffmpeg-full was removed 2026-08 — unused.)
   #
   # Overlays (openmp empty-patch filter, opencode codesign fix, atuin from
   # unstable with search patch) live in modules/overlays/.
