@@ -476,7 +476,7 @@ binding = "Option+Shift+K"
 id = "move.up"
 
 [[hotkeys]]
-binding = "Option+Shift+L"
+binding = "Option+Shift+Right Arrow"
 id = "move.right"
 
 [[hotkeys]]
