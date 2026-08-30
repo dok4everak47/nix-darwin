@@ -28,7 +28,6 @@
     ./programs/tmux.nix
     ./programs/fetch.nix
     ./programs/aerospace.nix
-    ./programs/sketchybar.nix
 
     # ── Fixes / workarounds ────────────────────────────────────────────
     ./fixes/ssh-config.nix
