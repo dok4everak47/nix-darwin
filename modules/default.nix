@@ -27,8 +27,7 @@
     ./programs/rust.nix
     ./programs/tmux.nix
     ./programs/fetch.nix
-    ./programs/yabai.nix
-    ./programs/skhd.nix
+    ./programs/aerospace.nix
     ./programs/sketchybar.nix
 
     # ── Fixes / workarounds ────────────────────────────────────────────
