@@ -27,6 +27,8 @@
     ./programs/rust.nix
     ./programs/tmux.nix
     ./programs/fetch.nix
+    ./programs/yabai.nix
+    ./programs/sketchybar.nix
 
     # ── Fixes / workarounds ────────────────────────────────────────────
     ./fixes/ssh-config.nix
