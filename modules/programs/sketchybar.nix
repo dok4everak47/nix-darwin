@@ -26,8 +26,11 @@
     export PATH="/run/current-system/sw/bin:$PATH"
 
     # ── Bar appearance ──────────────────────────────────────────────
-    sketchybar --bar height=32 position=top padding_left=8 padding_right=8 \
-      color=0xEE1E1E2E margin=0 corner_radius=12 y_offset=4
+    # y_offset=0: system menu bar is hidden (_HIHideMenuBar=true), so the
+    # bar sits flush at the very top. Items stay clear of the MacBook
+    # Pro notch via notch_width below (main display = external 4K, no
+    # notch, so 0 is fine; adjust if bar moves to the built-in display).
+    sketchybar --bar height=32 position=top padding_left=8 padding_right=8 color=0xEE1E1E2E margin=0 corner_radius=12 y_offset=0
 
     # ── Global colors ───────────────────────────────────────────────
     export BAR_COLOR=0xEE1E1E2E
@@ -62,7 +65,7 @@
     sketchybar --set app_name \
       icon=󰀨 \
       label="" \
-      script="$PLUGIN_DIR/app_name.sh" \
+      script="$CONFIG_DIR/plugins/app_name.sh" \
       --subscribe app_name front_app_switched
 
     # Date
@@ -85,7 +88,7 @@
     sketchybar --set battery \
       icon=󰁹 \
       label="" \
-      script="$PLUGIN_DIR/battery.sh" \
+      script="$CONFIG_DIR/plugins/battery.sh" \
       update_freq=120 \
       --subscribe battery system_woke power_source_change
   '';
@@ -137,6 +140,10 @@ in {
   # nix-darwin only executes PREDEFINED activation script names; use
   # extraActivation (runs as root → absolute path + chown).
   system.activationScripts.extraActivation.text = lib.mkAfter ''
+    # Hide the macOS system menu bar (SketchyBar replaces it).
+    # _HIHideMenuBar requires logout/login (or reboot) to fully take effect.
+    defaults write NSGlobalDomain _HIHideMenuBar -bool true || true
+
     CONFIG_DIR=${shared.home}/.config/sketchybar
     PLUGIN_DIR=$CONFIG_DIR/plugins
     install -d -m 0755 -o ${shared.username} -g staff "$CONFIG_DIR" "$PLUGIN_DIR"
