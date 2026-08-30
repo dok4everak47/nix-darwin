@@ -21,6 +21,10 @@
   sketchybarrc = pkgs.writeText "sketchybarrc" ''
     #!/usr/bin/env sh
 
+    # launchd PATH is minimal (/usr/bin:/bin:...); add nix system profile so
+    # `sketchybar` invocations resolve.
+    export PATH="/run/current-system/sw/bin:$PATH"
+
     # ── Bar appearance ──────────────────────────────────────────────
     sketchybar --bar height=32 position=top padding_left=8 padding_right=8 \
       color=0xEE1E1E2E margin=0 corner_radius=12 y_offset=4
@@ -89,11 +93,13 @@
   # ── Plugins (event scripts) ──────────────────────────────────────
   appNameScript = pkgs.writeShellScript "app_name.sh" ''
     #!/usr/bin/env sh
+    export PATH="/run/current-system/sw/bin:$PATH"
     sketchybar --set app_name label="$INFO"
   '';
 
   batteryScript = pkgs.writeShellScript "battery.sh" ''
     #!/usr/bin/env sh
+    export PATH="/run/current-system/sw/bin:$PATH"
     source "$CONFIG_DIR/colors.sh"
 
     PERCENTAGE=$(pmset -g batt | grep -Eo '[0-9]+%' | head -1 | tr -d '%')

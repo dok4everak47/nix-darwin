@@ -23,6 +23,9 @@
 
   yabaiCfg = pkgs.writeText "yabairc" ''
     # ── yabai configuration (managed by nix-darwin; edit via yabai -m) ──
+    # yabai sources this at startup; launchd PATH is minimal so add nix
+    # system profile for the `yabai -m` invocations below.
+    export PATH="/run/current-system/sw/bin:$PATH"
     # Layout: bsp (binary space partitioning)
     yabai -m config layout bsp
 
@@ -43,14 +46,8 @@
     yabai -m config mouse_action1 move
     yabai -m config mouse_action2 resize
 
-    # Status bar (sketchybar handles this)
-    yabai -m config status_bar off
-
     # Auto balance
     yabai -m config auto_balance off
-
-    # Focus follows window on space change
-    yabai -m config focus_follows_window off
 
     # Rules: float some apps
     yabai -m rule --add app="^System Settings$" manage=off
@@ -62,6 +59,14 @@
     yabai -m rule --add app="^Ghostty$" manage=off
     yabai -m rule --add app="^OmniWM$" manage=off
     yabai -m rule --add app="^Mos$" manage=off
+  '';
+
+  # Launch wrapper: export PATH for the yabairc that yabai sources itself
+  # (yabai auto-loads ~/.config/yabai/yabairc, whose `yabai -m config`
+  # commands need yabai on PATH), then exec yabai.
+  yabaiStart = pkgs.writeShellScript "yabai-start" ''
+    export PATH="/run/current-system/sw/bin:$PATH"
+    exec ${pkgs.yabai}/bin/yabai
   '';
 in {
   environment.systemPackages = [pkgs.yabai];
@@ -78,7 +83,7 @@ in {
 
   launchd.user.agents.yabai = {
     serviceConfig = {
-      ProgramArguments = ["${pkgs.yabai}/bin/yabai"];
+      ProgramArguments = ["${yabaiStart}"];
       RunAtLoad = true;
       KeepAlive = true;
       ProcessType = "Interactive";
