@@ -66,9 +66,9 @@
     ctrl + alt + shift - up   : yabai -m window --space prev; yabai -m space --focus prev
     ctrl + alt + shift - down : yabai -m window --space next; yabai -m space --focus next
 
-    # ── Resize / balance ──
-    alt - equal : yabai -m space --balance
-    alt - minus : yabai -m space --balance
+    # ── Balance ──
+    # NOTE: skhd 0.3.9 has no named keys for = - ` etc. Use letters.
+    alt - b : yabai -m space --balance
 
     # ── Fullscreen ──
     alt - return : yabai -m window --toggle zoom-fullscreen
@@ -85,7 +85,7 @@
     alt + shift - r : yabai -m space --mirror x-axis
 
     # ── Terminals ──
-    alt - grave : open -a Ghostty
+    alt - g : open -a Ghostty
 
     # ── Misc ──
     alt + shift - q : yabai -m space --destroy
