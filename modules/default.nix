@@ -27,7 +27,6 @@
     ./programs/rust.nix
     ./programs/tmux.nix
     ./programs/fetch.nix
-    ./programs/aerospace.nix
 
     # ── Fixes / workarounds ────────────────────────────────────────────
     ./fixes/ssh-config.nix

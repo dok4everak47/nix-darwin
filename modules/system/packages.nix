@@ -35,9 +35,7 @@
     yazi
     yt-dlp # video downloader (CLI); 2026-08-29 re-added per user request (nixpkgs, not brew -- AGENTS.md rule 4)
     ffmpeg # video/audio toolkit (includes ffprobe, ffplay); 2026-08-29 re-added per user request (nixpkgs, not brew)
-    # omniwm REMOVED 2026-08-30 — replaced by yabai (tiling WM). Overlay code
-    # kept in modules/overlays/default.nix for reference; omniwm 0.6.3 config
-    # still at ~/.config/omniwm/ if ever needed again.
+    omniwm # tiling WM (overlay: DavSanchez build logic + v0.6.3, signature-preserving bsdtar)
     (emacs.override {
       withXwidgets = true;
       withXinput2 = true;
