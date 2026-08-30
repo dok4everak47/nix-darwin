@@ -30,5 +30,6 @@
 
     # ── Fixes / workarounds ────────────────────────────────────────────
     ./fixes/ssh-config.nix
+    ./fixes/dasd-freeze.nix
   ];
 }

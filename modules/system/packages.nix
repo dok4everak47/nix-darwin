@@ -16,7 +16,8 @@
   # Homebrew takeover (2026-08): CLI tools migrated here from brew.
   # imagemagick-full stays on Homebrew (full feature set), managed in
   # modules/system/homebrew.nix and prioritized in shell PATH.
-  # (ffmpeg-full was removed 2026-08 — unused.)
+  # (ffmpeg-full removed 2026-08; plain ffmpeg re-added 2026-08-29 per user request —
+  #  ffmpeg-full adds extra codecs, plain ffmpeg has ffmpeg/ffprobe/ffplay.)
   #
   # Overlays (openmp empty-patch filter, opencode codesign fix, atuin from
   # unstable with search patch) live in modules/overlays/.
@@ -32,6 +33,9 @@
     neomutt
     isync
     yazi
+    yt-dlp # video downloader (CLI); 2026-08-29 re-added per user request (nixpkgs, not brew -- AGENTS.md rule 4)
+    ffmpeg # video/audio toolkit (includes ffprobe, ffplay); 2026-08-29 re-added per user request (nixpkgs, not brew)
+    omniwm # tiling WM (overlay: DavSanchez build logic + v0.6.4, signature-preserving bsdtar)
     (emacs.override {
       withXwidgets = true;
       withXinput2 = true;
