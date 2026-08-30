@@ -43,7 +43,7 @@ scripts/             # npm-proxy-build.sh 等（llm-agents 构建期依赖）
 ## 工作流（改配置的正确姿势）
 
 1. **改**：编辑对应模块，保持现有注释风格（中文注释、区块标题 `# ── xxx ──`）。
-2. **验证**：`cd /etc/nix-darwin && nix flake check --no-build`（必须全绿）。
+2. **验证（build 测试）**：`cd /etc/nix-darwin && nix flake check --no-build` 必须全绿；**每次改完代码后必须先 build 测试过一遍**（`nix build --no-link --print-out-paths '.#darwinConfigurations.dok4ever-mac.system'` 或 `nix flake check`），**如果有报错让 AI 自己改**，改到全绿才能交差，不许把报错留给用户。
 3. **rebuild**：用户自己跑 `sudo darwin-rebuild switch --flake .#dok4ever-mac`（agent 无 sudo，不要尝试）。
 4. **提交**：`git add -A && git commit`，推送到 `gitea`（SSH, `ssh://git@gitea.luongchin.com:2222/dok4ever/nix-darwin.git`）和 `origin`（GitHub HTTPS, `github.com/dok4everak47/nix-darwin`）。
    - push 需要代理 `127.0.0.1:7890` 在跑（ClashBar）。失败先 `lsof -iTCP:7890` 确认代理，再让用户重启 ClashBar。
@@ -75,6 +75,7 @@ scripts/             # npm-proxy-build.sh 等（llm-agents 构建期依赖）
 ## 验证清单（改完自查）
 
 - [ ] `nix flake check --no-build` 全绿
+- [ ] 每次改完代码已先 build 测试过（`nix build --no-link --print-out-paths '.#darwinConfigurations.dok4ever-mac.system'`），报错已自己修掉
 - [ ] 没往 `systemPackages` 加语言工具链
 - [ ] PATH 顺序没破坏 devShell 优先（`$HOME/.nix-profile/bin` 在 system profile 前）
 - [ ] brew 包改动同步了 `homebrew.brews`（cleanup=uninstall 会删未声明的）
