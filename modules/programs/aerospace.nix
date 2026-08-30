@@ -33,8 +33,10 @@
     enable-normalization-opposite-orientation-for-nested-containers = true
 
     accordion-padding = 30
-    default-root-container-layout = 'tiles'
-    default-root-container-orientation = 'auto'
+    # niri-style: accordion layout = focused window expands, others compress
+    # into narrow strips (like niri's focused column being centered/large)
+    default-root-container-layout = 'accordion'
+    default-root-container-orientation = 'horizontal'
 
     # Keep 9 workspaces alive (like OmniWM's 9 spaces)
     persistent-workspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
@@ -114,6 +116,17 @@
         alt-f = ['mode service']
         alt-g = ['exec-and-forget open -a Ghostty']
 
+        # ── niri-style: column operations ─────────────────────────
+        # join focused window with neighbor into one container (niri's
+        # consumeWindowIntoColumn equivalent — merge into a stack).
+        # NOTE: 'split' is disabled — it conflicts with
+        # enable-normalization-flatten-containers (aerospace warns).
+        alt-s = ['mode service']
+
+        # Toggle accordion (focused-column-zoom) vs tiles (flat grid)
+        alt-comma = 'layout accordion horizontal vertical'
+        alt-slash = 'layout tiles horizontal vertical'
+
     # ── Service mode (temporary, for operations needing one key) ──
     [mode.service.binding]
         esc = ['reload-config', 'mode main']
@@ -121,6 +134,13 @@
         r = ['flatten-workspace-tree', 'mode main']   # reset layout
         t = ['layout tiles horizontal vertical', 'mode main']  # toggle split dir
         backspace = ['close-all-windows-but-current', 'mode main']
+        # niri-style column ops: join window into neighbor container
+        # (consumeWindowIntoColumn ≈ join-with; expel ≈ move out)
+        s = ['mode main']
+        h = ['join-with left', 'mode main']
+        j = ['join-with down', 'mode main']
+        k = ['join-with up', 'mode main']
+        l = ['join-with right', 'mode main']
   '';
 in {
   environment.systemPackages = [pkgs.aerospace];
