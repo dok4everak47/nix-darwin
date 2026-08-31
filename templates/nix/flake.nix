@@ -13,7 +13,8 @@
       pkgs = nixpkgs.legacyPackages.${system};
     in {
       default = pkgs.mkShell {
-        packages = with pkgs; [nixpkgs-fmt statix deadnix nil];
+        # Nix formatter: alejandra (@url: https://github.com/kamadorueda/alejandra)
+        packages = with pkgs; [alejandra nixpkgs-fmt statix deadnix nil];
         shellHook = ''
           # ClashBar proxy on 127.0.0.1:7890 -- exported only while it is
           # listening, so a dead proxy never breaks the shell's network.
