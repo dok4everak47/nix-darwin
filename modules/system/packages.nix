@@ -55,6 +55,7 @@
     cinny-desktop
     codex
     cc-switch # AI coding assistant config switcher (NUR MCSeekeri, Tauri app)
+    chezmoi # dotfile manager (declarative ~/ config); dotfiles repo TBD
 
     # ── Migrated from Homebrew ────────────────────────────────────────
     antidote # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
