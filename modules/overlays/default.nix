@@ -10,6 +10,7 @@
   pkgs,
   unstable,
   nixos-unstable,
+  mcseekeri-nur,
   ...
 }: {
   nixpkgs.overlays = [
@@ -131,5 +132,12 @@
         };
       });
     })
-  ];
-}
+
+    # ── cc-switch: MCSeekeri NUR (3.20.0, Tauri desktop app) ──────────
+    # AI coding assistant config switcher (Claude Code, Codex, OpenCode...).
+    # From MCSeekeri/NUR flake (own nixpkgs-unstable; binary cache
+    # nix.mcseekeri.com). Exposed as packages.<system>.cc-switch.
+    (final: prev: {
+      cc-switch = mcseekeri-nur.packages.${prev.stdenv.hostPlatform.system}.cc-switch;
+    })
+  ];}

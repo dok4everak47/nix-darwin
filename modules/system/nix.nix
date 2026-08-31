@@ -19,6 +19,19 @@ in {
   #       trusted-users = [ "root" ]
   nix.settings.trusted-users = [shared.username];
 
+  # ── MCSeekeri NUR binary cache (cc-switch et al.) ────────────────────
+  # The flake declares these in nixConfig, but that only applies when
+  # building the flake directly — as an input we must trust it explicitly.
+  # Avoids compiling cc-switch (Tauri: Rust + pnpm) from source.
+  nix.settings.substituters = [
+    "https://nix.mcseekeri.com"
+    "https://cache.nixos.org/"
+  ];
+  nix.settings.trusted-public-keys = [
+    "nix.mcseekeri.com-1:3gd0/2u7IOF7YooxEiBbWTvRCYGC53S2UoqFdnCUYHc="
+    "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+  ];
+
   # ── Proxy for nix-daemon ────────────────────────────────────────────
   # nix-daemon 是 root 常驻进程，从 launchd 启动时不继承 shell 代理变量，
   # 直连 cache.nixos.org 被墙。nix.envVars 是官方设计给 daemon 注入环境

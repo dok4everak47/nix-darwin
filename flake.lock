@@ -97,6 +97,25 @@
         "type": "github"
       }
     },
+    "mcseekeri-nur": {
+      "inputs": {
+        "nixpkgs": "nixpkgs_2",
+        "treefmt-nix": "treefmt-nix_2"
+      },
+      "locked": {
+        "lastModified": 1787324819,
+        "narHash": "sha256-gJeBgxPuC/D+A05Z0gHyzLHrvcZMa4nDNGUax+dn/8E=",
+        "owner": "MCSeekeri",
+        "repo": "NUR",
+        "rev": "00000315713f48424cf6d5116990c576bce2a1aa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "MCSeekeri",
+        "repo": "NUR",
+        "type": "github"
+      }
+    },
     "nix-darwin": {
       "inputs": {
         "nixpkgs": [
@@ -152,6 +171,22 @@
     },
     "nixpkgs_2": {
       "locked": {
+        "lastModified": 1787172299,
+        "narHash": "sha256-PShzS87awOlE5XWkxUGBd/58/F+AtE2ZMgFffKj4r8s=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "07e1d92cdc0ed416cfa11ff3ca40d17e61cfba7a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
+      "locked": {
         "lastModified": 1786313170,
         "narHash": "sha256-9BG7OgUWdu0ONDO5X2q6+K4bsuBITkX/3W4nNJu1Ito=",
         "owner": "NixOS",
@@ -170,9 +205,10 @@
       "inputs": {
         "areofyl-fetch": "areofyl-fetch",
         "llm-agents": "llm-agents",
+        "mcseekeri-nur": "mcseekeri-nur",
         "nix-darwin": "nix-darwin",
         "nixos-unstable": "nixos-unstable",
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": "nixpkgs_3",
         "unstable": "unstable"
       }
     },
@@ -195,6 +231,27 @@
       "inputs": {
         "nixpkgs": [
           "llm-agents",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1786901030,
+        "narHash": "sha256-WSFCsDSE5ffgD2MqzkM2CYjeFiKhRF/dJUN8uedb6YE=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "27b3b12a8e6375f28ebe122f07d230ca5459bbfa",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_2": {
+      "inputs": {
+        "nixpkgs": [
+          "mcseekeri-nur",
           "nixpkgs"
         ]
       },
