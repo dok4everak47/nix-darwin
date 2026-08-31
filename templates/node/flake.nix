@@ -13,6 +13,14 @@
       default = pkgs.mkShell {
         packages = with pkgs; [nodejs_22 pnpm];
         shellHook = ''
+          # ClashBar proxy on 127.0.0.1:7890 -- exported only while it is
+          # listening, so a dead proxy never breaks the shell's network.
+          if (echo > /dev/tcp/127.0.0.1/7890) 2>/dev/null; then
+            export http_proxy=http://127.0.0.1:7890 https_proxy=http://127.0.0.1:7890
+            export HTTP_PROXY=http://127.0.0.1:7890 HTTPS_PROXY=http://127.0.0.1:7890
+            export all_proxy=socks5://127.0.0.1:7890 ALL_PROXY=socks5://127.0.0.1:7890
+            export no_proxy=localhost,127.0.0.1,::1 NO_PROXY=localhost,127.0.0.1,::1
+          fi
           echo "🟢 Node $(node --version) | pnpm $(pnpm --version)"
         '';
       };
