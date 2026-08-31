@@ -105,6 +105,10 @@
         path = ./templates/elm;
         description = "Elm 0.19 compiler + tooling devShell";
       };
+      nix = {
+        path = ./templates/nix;
+        description = "Nix toolchain devShell (nixpkgs-fmt + statix + deadnix + nil)";
+      };
     };
   };
 }
