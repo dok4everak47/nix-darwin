@@ -87,22 +87,21 @@
       codex = nixos-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.codex;
     })
 
-    # ── omniwm: 0.6.3 from official release zip (bsdtar keeps signature) ─
+    # ── omniwm: 0.6.4 from official release zip (bsdtar keeps signature) ─
     # DoomHammer NUR package is BROKEN (cp -r . nests OmniWM.app inside
     # itself → empty $out/Applications; spctl: "invalid API object
     # reference"). DavSanchez's package builds cleanly (bsdtar -xf preserves
-    # the notarized Developer ID signature + links omniwmctl) but pins 0.6.3.
-    # This overlay = DavSanchez build logic + 0.6.3 release (pinned back
-    # 2026-08-30 per user request; 0.6.4 had issues for user).
-    # src hash verified 2026-08-30: sha256-rDRDQYOUxvntH5mA1EoXa6LPeqV2zN3OpnaD+eHOLiU=
+    # the notarized Developer ID signature + links omniwmctl) but pins 0.6.4.
+    # This overlay = DavSanchez build logic + 0.6.4 release.
+    # src hash verified 2026-08-31: sha256-myv1TSDWf1NicAMuBiUXbAbG4DuIl93wJVWNlIM55ec=
     (final: prev: {
       omniwm = prev.stdenvNoCC.mkDerivation (finalAttrs: {
         pname = "omniwm";
-        version = "0.6.3";
+        version = "0.6.4";
 
         src = prev.fetchurl {
           url = "https://github.com/BarutSRB/OmniWM/releases/download/v${finalAttrs.version}/OmniWM-v${finalAttrs.version}.zip";
-          hash = "sha256-rDRDQYOUxvntH5mA1EoXa6LPeqV2zN3OpnaD+eHOLiU=";
+          hash = "sha256-myv1TSDWf1NicAMuBiUXbAbG4DuIl93wJVWNlIM55ec=";
         };
 
         dontUnpack = true;
