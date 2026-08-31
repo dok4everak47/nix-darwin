@@ -14,7 +14,7 @@
     in {
       default = pkgs.mkShell {
         # Nix formatter: alejandra (@url: https://github.com/kamadorueda/alejandra)
-        packages = with pkgs; [alejandra nixpkgs-fmt statix deadnix nil];
+        packages = with pkgs; [alejandra statix deadnix nil];
         shellHook = ''
           # ClashBar proxy on 127.0.0.1:7890 -- exported only while it is
           # listening, so a dead proxy never breaks the shell's network.
@@ -24,7 +24,7 @@
             export all_proxy=socks5://127.0.0.1:7890 ALL_PROXY=socks5://127.0.0.1:7890
             export no_proxy=localhost,127.0.0.1,::1 NO_PROXY=localhost,127.0.0.1,::1
           fi
-          echo "❄️ Nix $(nix --version) | fmt $(nixpkgs-fmt --version) | nil $(nil --version)"
+          echo "❄️ Nix $(nix --version) | alejandra $(alejandra --version) | nil $(nil --version)"
         '';
       };
     });
