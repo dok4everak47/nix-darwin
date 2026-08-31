@@ -34,6 +34,12 @@ in {
     # panes, IDE terminals) where ~/.zprofile (brew shellenv) never runs.
     # Previously this relied on `antidote` being on PATH, which only held in
     # login shells; in tmux it was `command not found`.
+    #
+    # ANTIDOTE_HOME: 默认 $HOME/Library/Caches/antidote —— macOS 会定期清理
+    # ~/Library/Caches, 缓存被清后 .zsh_plugins.zsh 还在引用旧路径, 报
+    # "no such file or directory: .../zsh-autosuggestions.plugin.zsh"。
+    # 改到 ~/.local/share/antidote (XDG 数据目录, 系统不清理)。
+    export ANTIDOTE_HOME="$HOME/.local/share/antidote"
     source ${pkgs.antidote}/share/antidote/antidote.zsh
 
     # ── fzf key bindings (MUST precede the antidote bundle) ───────────

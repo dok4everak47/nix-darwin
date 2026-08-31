@@ -31,6 +31,10 @@ in {
         name = "lab421/tap";
         trusted = true;
       }
+      {
+        name = "realskyrin/tap";
+        trusted = true;
+      }
     ];
 
     brews = [
@@ -43,6 +47,7 @@ in {
       "flowvision"
       "font-symbols-only-nerd-font"
       "forel"
+      "capcap"
       # NOTE: emacs-app intentionally absent — Nix Emacs
       # (/Applications/Nix Apps/Emacs.app) is the canonical install.
     ];
