@@ -35,7 +35,7 @@
     yazi
     yt-dlp # video downloader (CLI); 2026-08-29 re-added per user request (nixpkgs, not brew -- AGENTS.md rule 4)
     ffmpeg # video/audio toolkit (includes ffprobe, ffplay); 2026-08-29 re-added per user request (nixpkgs, not brew)
-    # omniwm now managed by modules/programs/omniwm.nix (config + launchd)
+    # omniwm removed 2026-09-01 (unused)
     (emacs.override {
       withXwidgets = true;
       withXinput2 = true;

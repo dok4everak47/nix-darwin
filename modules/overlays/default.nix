@@ -88,51 +88,6 @@
       codex = nixos-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.codex;
     })
 
-    # ── omniwm: 0.6.4 from official release zip (bsdtar keeps signature) ─
-    # DoomHammer NUR package is BROKEN (cp -r . nests OmniWM.app inside
-    # itself → empty $out/Applications; spctl: "invalid API object
-    # reference"). DavSanchez's package builds cleanly (bsdtar -xf preserves
-    # the notarized Developer ID signature + links omniwmctl) but pins 0.6.4.
-    # This overlay = DavSanchez build logic + 0.6.4 release.
-    # src hash verified 2026-08-31: sha256-myv1TSDWf1NicAMuBiUXbAbG4DuIl93wJVWNlIM55ec=
-    (final: prev: {
-      omniwm = prev.stdenvNoCC.mkDerivation (finalAttrs: {
-        pname = "omniwm";
-        version = "0.6.4";
-
-        src = prev.fetchurl {
-          url = "https://github.com/BarutSRB/OmniWM/releases/download/v${finalAttrs.version}/OmniWM-v${finalAttrs.version}.zip";
-          hash = "sha256-myv1TSDWf1NicAMuBiUXbAbG4DuIl93wJVWNlIM55ec=";
-        };
-
-        dontUnpack = true;
-        strictDeps = true;
-        nativeBuildInputs = [ prev.libarchive ];
-
-        installPhase = ''
-          runHook preInstall
-
-          mkdir -p $out/Applications/
-          bsdtar -xf $src -C $out/Applications/
-
-          mkdir -p $out/bin
-          ln -s $out/Applications/OmniWM.app/Contents/MacOS/OmniWM $out/bin/OmniWM
-          ln -s $out/Applications/OmniWM.app/Contents/MacOS/omniwmctl $out/bin/omniwmctl
-
-          runHook postInstall
-        '';
-
-        meta = {
-          description = "macOS tiling window manager inspired by Niri and Hyprland";
-          homepage = "https://github.com/BarutSRB/OmniWM";
-          license = prev.lib.licenses.gpl2Only;
-          mainProgram = "OmniWM";
-          platforms = prev.lib.platforms.darwin;
-          sourceProvenance = [ prev.lib.sourceTypes.binaryNativeCode ];
-        };
-      });
-    })
-
     # ── cc-switch: MCSeekeri NUR (3.20.0, Tauri desktop app) ──────────
     # AI coding assistant config switcher (Claude Code, Codex, OpenCode...).
     # From MCSeekeri/NUR flake (own nixpkgs-unstable; binary cache
