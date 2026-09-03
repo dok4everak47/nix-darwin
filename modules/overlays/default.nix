@@ -10,7 +10,6 @@
   pkgs,
   unstable,
   nixos-unstable,
-  mcseekeri-nur,
   ...
 }: {
   nixpkgs.overlays = [
@@ -21,10 +20,9 @@
     # imagemagick. An empty patch is a no-op anyway, so filter it out.
     (final: prev: {
       openmp = prev.openmp.overrideAttrs (old: {
-        patches =
-          builtins.filter
-          (p: builtins.match ".*run-lit-directly.patch" (toString p) == null)
-          (old.patches or []);
+        patches = builtins.filter (p: builtins.match ".*run-lit-directly.patch" (toString p) == null) (
+          old.patches or []
+        );
       });
     })
 
@@ -64,8 +62,7 @@
     # The patch removes it; hyphen-prefixed queries now need an explicit
     # `--` separator.
     (final: prev: {
-      atuin = (unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.atuin)
-        .overrideAttrs (old: {
+      atuin = (unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.atuin).overrideAttrs (old: {
         patches = (old.patches or []) ++ [../../atuin-fix-search-hyphen.patch];
       });
     })
@@ -88,11 +85,14 @@
       codex = nixos-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.codex;
     })
 
-    # ── cc-switch: MCSeekeri NUR (3.20.0, Tauri desktop app) ──────────
-    # AI coding assistant config switcher (Claude Code, Codex, OpenCode...).
-    # From MCSeekeri/NUR flake (own nixpkgs-unstable; binary cache
-    # nix.mcseekeri.com). Exposed as packages.<system>.cc-switch.
+    # ── nitter: use nixos-unstable version (2026-07-11) ───────────────
+    # Stable 26.05 only ships nitter 0-unstable-2026-01-29. Both crash with
+    # SIGSEGV in Nim's async SSL (SSL_CTX_new) on macOS 27, but the newer
+    # build + DYLD_LIBRARY_PATH pin to the 26.05 openssl (see
+    # modules/system/nitter.nix) makes it stable. Track the rolling
+    # nixos-unstable channel for the newest build.
     (final: prev: {
-      cc-switch = mcseekeri-nur.packages.${prev.stdenv.hostPlatform.system}.cc-switch;
+      nitter = nixos-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.nitter;
     })
-  ];}
+  ];
+}

@@ -33,11 +33,6 @@
     # (when the numtide cache is trusted -- see modules/system/nix.nix).
     llm-agents.url = "github:numtide/llm-agents.nix";
 
-    # MCSeekeri NUR repo — provides cc-switch (AI coding assistant config
-    # switcher, Tauri app). Built against its OWN pinned nixpkgs-unstable
-    # (deliberately NOT follows = "nixpkgs", same rationale as llm-agents).
-    # Has a binary cache: https://nix.mcseekeri.com (trusted in nix.nix).
-    mcseekeri-nur.url = "github:MCSeekeri/NUR";
   };
 
   outputs = inputs @ {
@@ -48,7 +43,6 @@
     nixos-unstable,
     areofyl-fetch,
     llm-agents,
-    mcseekeri-nur,
   }: {
     # Build darwin flake using:
     # $ darwin-rebuild switch --flake .#dok4ever-mac
@@ -62,7 +56,6 @@
         inherit unstable nixos-unstable;
         areofyl-fetch = inputs.areofyl-fetch;
         llm-agents = inputs.llm-agents;
-        mcseekeri-nur = inputs.mcseekeri-nur;
       };
 
       modules = [

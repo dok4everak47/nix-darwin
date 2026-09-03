@@ -45,7 +45,6 @@
       }) # Emacs 30 + xwidget-webkit (内嵌浏览器, 跑 CSS/JS); GUI at /Applications/Nix Apps/Emacs.app
       fd
       nmap
-      nil
       alejandra
       ghostty-bin
       zed-editor
@@ -57,7 +56,6 @@
       herdr
       cinny-desktop
       codex
-      cc-switch # AI coding assistant config switcher (NUR MCSeekeri, Tauri app)
       chezmoi # dotfile manager (declarative ~/ config); dotfiles repo TBD
       age # chezmoi 敏感文件加密 (dotfiles repo 用)
 
