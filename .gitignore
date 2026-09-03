@@ -16,3 +16,6 @@ result
 scripts/npm-proxy-cert.pem
 scripts/npm-proxy-key.pem
 scripts/npm-proxy.log
+
+# Hermes session dump (accidental)
+session.json

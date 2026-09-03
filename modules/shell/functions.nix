@@ -245,5 +245,49 @@ in {
       fi
     }
     alias nt='nix-template'
+
+    # karakuri: run the home-grown AI agent runtime (Project/karakuri) against
+    # the CURRENT directory, using a provider profile from
+    # ~/.config/karakuri/providers/<name>.env (API keys live there, mode 600,
+    # never in the nix store).
+    #   $ cd ~/dev/some-project && karakuri        # default provider: ark
+    #   $ karakuri openai                          # pick another provider
+    #   $ karakuri ssh                             # fzf-pick a remote project under KARAKURI_SSH_BASE (default /home/dok/Project)
+    #   $ KARAKURI_SANDBOX_NETWORK=1 karakuri       # env overrides pass through
+    # Seatbelt sandbox is on by default (KARAKURI_SANDBOX=1); set
+    # KARAKURI_SANDBOX=0 to disable. Toolchain comes from the project flake's
+    # nix develop (cargo must be on PATH for the agent's exec tool).
+    karakuri() {
+      local profile="''${1:-ark}"
+      local env_file="$HOME/.config/karakuri/providers/$profile.env"
+      if [ ! -f "$env_file" ]; then
+        echo "✖ no such provider profile: $profile ($env_file)" >&2
+        echo "  available: $(ls -1 "$HOME/.config/karakuri/providers" 2>/dev/null | sed 's/\.env$//' | tr '\n' ' ')" >&2
+        return 1
+      fi
+      local proj="$PWD"
+      (
+        set -a; source "$env_file"; set +a
+
+        # SSH 模式且未固定 KARAKURI_SSH_ROOT：从远程基目录（默认
+        # /home/dok/Project，可用 KARAKURI_SSH_BASE 覆盖）fzf 选一个项目。
+        if [ "''${KARAKURI_RUNTIME:-}" = ssh ] && [ -z "''${KARAKURI_SSH_ROOT:-}" ]; then
+          base="''${KARAKURI_SSH_BASE:-/home/dok/Project}"
+          # 列目录也走 sh -s + stdin（远程登录 shell 可能是 fish，POSIX 循环交给 sh）
+          pick=$(ssh -o BatchMode=yes -o ConnectTimeout=8 "''${KARAKURI_SSH_HOST:-}" sh -s 2>/dev/null <<EOF | fzf --prompt="remote project ($base) > "
+for d in '$base'/*/; do [ -d "\$d" ] && basename "\$d"; done
+EOF
+          ) \
+            || { echo "✖ 未选择项目，或无法连接 ''${KARAKURI_SSH_HOST:-<host>}" >&2; return 1; }
+          [ -z "$pick" ] && { echo "✖ 未选择项目" >&2; return 1; }
+          export KARAKURI_SSH_ROOT="$base/$pick"
+          echo "→ remote root: $KARAKURI_SSH_ROOT"
+        fi
+
+        cd ${home}/Project/karakuri || exit 1
+        KARAKURI_SANDBOX="''${KARAKURI_SANDBOX:-1}" \
+          nix develop --command bash -c "cd '$proj' && exec ${home}/Project/karakuri/target/debug/karakuri"
+      )
+    }
   '';
 }

@@ -13,6 +13,7 @@
     ./system/packages.nix
     ./system/activation.nix
     ./system/pam.nix
+    ./system/nitter.nix # self-hosted Nitter (x-tweet-fetcher timeline backend)
 
     # ── Shell ──────────────────────────────────────────────────────────
     ./shell/default.nix
