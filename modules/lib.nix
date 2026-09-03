@@ -13,9 +13,9 @@
   # (shell/GUI) both reference these, so the two never drift apart.
   proxyEnv = {
     http_proxy = "http://127.0.0.1:7890";
-    https_proxy = "http://127.0.0.1:7890";
+    https_proxy = "socks5://127.0.0.1:7890";
     HTTP_PROXY = "http://127.0.0.1:7890";
-    HTTPS_PROXY = "http://127.0.0.1:7890";
+    HTTPS_PROXY = "socks5://127.0.0.1:7890";
     no_proxy = "localhost,127.0.0.1,::1,feishu.cn,.feishu.cn,larksuite.com,.larksuite.com";
     NO_PROXY = "localhost,127.0.0.1,::1,feishu.cn,.feishu.cn,larksuite.com,.larksuite.com";
   };
