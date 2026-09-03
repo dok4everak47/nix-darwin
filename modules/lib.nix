@@ -32,15 +32,14 @@
   # Shared by shellInit (all zsh, including non-interactive) and
   # interactiveShellInit (re-asserted after ~/.zprofile runs
   # `brew shellenv` in login shells).
-  #   1. keg-only Homebrew full builds beat nixpkgs and regular brew
-  #      builds. (ffmpeg-full removed 2026-08; imagemagick-full remains.)
+  #   1. user nix profile (devShell 装的工具, e.g. rust-analyzer) — devShell 优先
+  #      (imagemagick-full keg removed 2026-09-03, now nixpkgs system profile).
   #   2. Nix system profile — migrated CLI tools — beats /opt/homebrew/bin.
   #   3. TeX, user bins, then /opt/homebrew/bin as a fallback.
   #   4. macOS system paths are preserved via $path (never wholesale-replace).
   pathInit = ''
     typeset -U path
     path=(
-      /opt/homebrew/opt/imagemagick-full/bin
       # user nix profile (devShell 装的 rust-analyzer 1.98.0 走这里) 优先
       $HOME/.nix-profile/bin
       /nix/var/nix/profiles/default/bin

@@ -16,7 +16,8 @@
    - 全局装语言工具链的历史事故：系统 rust-analyzer (2026-06-01) PATH 优先于 devShell 的 rust-overlay 1.98.0，叠加 FSEvents 监听 `.direnv/` 触发 reindex 风暴 → 单核 95% 持续高温。
    - 新增语言工具链 → 创建 `templates/<lang>/flake.nix` 模板，不要加进 `systemPackages`。
 2. **`modules/lib.nix` 的 `pathInit` 是 PATH 单一事实来源**，`modules/shell/default.nix` 和 `modules/shell/plugins.nix` 都引用它。改 PATH 顺序前想清楚：
-   - keg-only Homebrew full builds (imagemagick-full) → user nix profile (devShell 装的工具) → nix default profile → system profile → TeX → user bins → /opt/homebrew。
+   - user nix profile (devShell 装的工具) → nix default profile → system profile → TeX → user bins → /opt/homebrew。
+   - imagemagick 2026-09-03 从 brew imagemagick-full 迁到 nixpkgs（packages.nix，ghostscriptSupport=true）——PATH 里不再有 /opt/homebrew/opt/imagemagick-full/bin。
    - 不要重新引入 `/opt/homebrew/opt/ffmpeg-full/bin`（ffmpeg-full 已删，2026-08）。
 3. **Homebrew 用 `onActivation.cleanup = "uninstall"`**：任何未在 `homebrew.brews` 声明的顶层公式会在 rebuild 时被卸载。新增 brew 包必须同步声明。
 4. **不要引入 Homebrew 能替代 nixpkgs 的 CLI 工具**。CLI 工具走 nixpkgs（`modules/system/packages.nix`），Homebrew 只留 keg-only full builds + casks。
