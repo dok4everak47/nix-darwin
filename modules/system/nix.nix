@@ -19,6 +19,22 @@ in {
   #       trusted-users = [ "root" ]
   nix.settings.trusted-users = [shared.username];
 
+  # ── numtide cache for llm-agents (2026-09-06) ────────────────────────
+  # llm-agents.nix declares cache.numtide.com in its own flake's nixConfig,
+  # but that is IGNORED when the flake is consumed as an input (per numtide
+  # flake docs / flake-parts pattern) -- substituters must be declared here.
+  # cache.numtide.com hosts the go-modules FOD + prebuilt crush/claude-code
+  # binaries; without it, Go source packages (crush) rebuild from proxy.golang.org
+  # which is GFW-blocked (EOF). cache.nixos.org stays first (official mirror).
+  nix.settings.substituters = [
+    "https://cache.nixos.org/"
+    "https://cache.numtide.com"
+  ];
+  nix.settings.trusted-public-keys = [
+    "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+    "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
+  ];
+
   # ── Proxy for nix-daemon ────────────────────────────────────────────
   # nix-daemon 是 root 常驻进程，从 launchd 启动时不继承 shell 代理变量，
   # 直连 cache.nixos.org 被墙。nix.envVars 是官方设计给 daemon 注入环境

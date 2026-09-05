@@ -85,6 +85,7 @@
     ++ (with llm-agents.packages.${pkgs.stdenv.hostPlatform.system}; [
       claude-code
       gemini-cli
+      crush # glamourous AI coding agent (charmbracelet/crush)
       # qwen-code 的 npmDeps FOD (prefetch-npm-deps, isahc) 直连 registry.npmjs.org
       # 拉 ~2400 个 tarball, 但该 fetcher 的一次性 isahc send() **不读任何代理环境变量**
       # (已三重验证: 源码无 proxy 调用 / 进程环境里有 https_proxy 但仍直连 / netstat 不见 7890 连接),
