@@ -22,9 +22,12 @@
 
   # SOCKS variants are only relevant for user shells / GUI apps, not the
   # nix-daemon (which only needs HTTP(S)_PROXY).
+  # SOCKS variants: 2026-09-06 注释掉 — all_proxy=socks5 污染 GUI app (nvim) git,
+  # git 优先用 env all_proxy(socks5) → github 443 SSL_ERROR_SYSCALL (Lazy update 失败)。
+  # ClashBar TUN/系统代理模式下不需要 socks5 env。
   shellProxyExtra = {
-    all_proxy = "socks5://127.0.0.1:7890";
-    ALL_PROXY = "socks5://127.0.0.1:7890";
+    # all_proxy = "socks5://127.0.0.1:7890";
+    # ALL_PROXY = "socks5://127.0.0.1:7890";
     LARK_CLI_NO_PROXY = "1";
   };
 
