@@ -10,6 +10,7 @@
     # ── System ─────────────────────────────────────────────────────────
     ./system/nix.nix
     ./system/homebrew.nix
+    ./system/users.nix # 用户声明:登录 shell 由 nix-darwin 管理(nushell)
     ./system/packages.nix
     ./system/activation.nix
     ./system/pam.nix
