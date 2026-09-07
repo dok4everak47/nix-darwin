@@ -3,7 +3,7 @@
 #   let shared = import ../lib.nix { inherit pkgs; };
 # or from a file directly under modules/:
 #   let shared = import ./lib.nix { };
-{}: rec {
+{ }: rec {
   # ── Identity ────────────────────────────────────────────────────────
   username = "dok4ever";
   home = "/Users/${username}";
@@ -58,5 +58,29 @@
       $path
     )
     export PATH
+  '';
+
+  # ── nushell PATH (与 pathInit 严格同序) ─────────────────────────────
+  # nushell 是登录 shell 时不读 /etc/zshenv / path_helper,`$env.PATH` 为
+  # nothing,须在 env.nu 里完整重建。顺序与上面 pathInit 保持一致,
+  # 末尾附 macOS 系统路径兜底(不依赖 launchd 已注入)。
+  pathInitNu = ''
+    $env.PATH = ([
+      ($env.HOME | path join ".nix-profile/bin")
+      "/nix/var/nix/profiles/default/bin"
+      # "/run/current-system/sw/bin"  # (fallback, 与 pathInit 注释对应)
+      "/nix/var/nix/profiles/system/sw/bin"
+      "/Library/TeX/texbin"
+      "/usr/local/texlive/2026basic/bin/universal-darwin"
+      ($env.HOME | path join ".local/bin")
+      ($env.HOME | path join "bin")
+      "/opt/homebrew/bin"
+      "/opt/homebrew/sbin"
+      "/usr/local/bin"
+      "/usr/bin"
+      "/bin"
+      "/usr/sbin"
+      "/sbin"
+    ] | uniq)
   '';
 }

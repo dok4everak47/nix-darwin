@@ -20,6 +20,7 @@
     ./shell/default.nix
     ./shell/aliases.nix
     ./shell/env.nix
+    ./shell/nushell.nix # 生成 ~/.config/nushell/env.nu(PATH/代理,与 zsh 同源)
     ./shell/plugins.nix
     ./shell/functions.nix
 
