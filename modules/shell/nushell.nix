@@ -141,6 +141,17 @@ let
         atuin search --interactive
     }
 
+    # ── yazi(终端文件管理器):退出后 cd 到 yazi 最后所在目录 ─────────
+    def --env y [...args] {
+        let tmp = (mktemp -t "yazi-cwd.XXXXXX")
+        ^yazi ...$args --cwd-file $tmp
+        let cwd = (open $tmp)
+        if $cwd != $env.PWD and ($cwd | path exists) {
+            cd $cwd
+        }
+        rm -fp $tmp
+    }
+
     # ── 集成:atuin(历史 hooks + ctrl-r)──────────────────────────────
     source "${shared.home}/Library/Application Support/nushell/atuin.nu"
 
