@@ -88,6 +88,13 @@ let
     $env.config.show_banner = false
     $env.config.history.max_size = 100000
     $env.config.history.sync_on_enter = true
+    # 输入时灰色历史建议(类似 zsh-autosuggestions, nushell 0.112 内置):
+    # 输命令时会提示下一条匹配历史,按 → / End 接受。
+    # show_hints = true 启用;hinter.closure = null 用内置历史建议;
+    # 建议颜色调亮一档(dark_gray → gray),更易察觉。
+    $env.config.show_hints = true
+    $env.config.hinter.closure = null
+    $env.config.color_config.hints = "gray"
 
     # ── 目录导航(对应 zsh 的 .. 系列)────────────────────────────────
     alias .. = cd ..
