@@ -9,8 +9,11 @@ let
   # ── 生成的 env.nu ───────────────────────────────────────────────────
   # nushell 作为登录 shell 时不读 /etc/zshenv、不执行 path_helper,
   # 启动时 $env.PATH 为 nothing → 所有 nix/brew 工具(fastfetch、herdr…)
-  # 都找不到。此文件在每次 nushell 启动时自动加载(默认 ~/.config/nushell/
-  # env.nu),重建 PATH 与关键环境变量,顺序与 zsh 的 pathInit 严格一致。
+  # 都找不到。此文件在每次 nushell 启动时自动加载,重建 PATH 与关键
+  # 环境变量,顺序与 zsh 的 pathInit 严格一致。
+  #
+  # 注意 macOS 上 nushell 的默认配置目录是 ~/Library/Application Support/
+  # nushell(而非 ~/.config/nushell)。
   #
   # 只管理 env.nu;config.nu(prompt/alias/插件)留给用户自行维护。
   envNu = pkgs.writeText "env.nu" ''
@@ -34,21 +37,19 @@ let
     $env.VISUAL = "nvim"
     $env.GIT_EDITOR = "nvim"
   '';
+
+  # 目标目录:macOS 上 nushell 实际读取的配置路径
+  nuConfigDir = "${shared.home}/Library/Application Support/nushell";
 in
 {
-  # ── ~/.config/nushell/env.nu ────────────────────────────────────────
-  # nix-darwin activation runs as root. There is no user-activation
-  # surface any more (removed in nix-darwin ≥ 2024), so create the XDG
-  # config path as root and chown to the primary user (same pattern as
-  # programs/fetch.nix).
-  system.activationScripts.nushell-env = {
-    text = ''
-      install -d -m 0755 -o ${shared.username} -g staff ${shared.home}/.config
-      install -d -m 0755 -o ${shared.username} -g staff ${shared.home}/.config/nushell
-      # `install` follows symlinks (would try to write into the read-only
-      # nix-store target). Remove any existing file or symlink first.
-      rm -f ${shared.home}/.config/nushell/env.nu
-      install -m 0644 -o ${shared.username} -g staff ${envNu} ${shared.home}/.config/nushell/env.nu
-    '';
-  };
+  # ── 安装 env.nu ─────────────────────────────────────────────────────
+  # 自定义 `system.activationScripts.<name>` 不会被执行(nix-darwin 只运行
+  # 预定义脚本 + extraActivation),必须挂到 extraActivation.text 上。
+  # activation 以 root 运行,故用绝对路径写文件并 chown 给用户。
+  system.activationScripts.extraActivation.text = lib.mkAfter ''
+    # [nushell.nix] 写入 ~/Library/Application Support/nushell/env.nu
+    install -d -m 0755 -o ${shared.username} -g staff "${nuConfigDir}"
+    rm -f "${nuConfigDir}/env.nu"
+    install -m 0644 -o ${shared.username} -g staff ${envNu} "${nuConfigDir}/env.nu"
+  '';
 }
