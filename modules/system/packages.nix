@@ -37,7 +37,7 @@
       yazi
       yt-dlp # video downloader (CLI); 2026-08-29 re-added per user request (nixpkgs, not brew -- AGENTS.md rule 4)
       ffmpeg # video/audio toolkit (includes ffprobe, ffplay); 2026-08-29 re-added per user request (nixpkgs, not brew)
-      (imagemagick.override { ghostscriptSupport = true; }) # image toolkit (magick/convert); from brew imagemagick-full 2026-09-03; ghostscript = PDF delegate parity
+      (imagemagick.override {ghostscriptSupport = true;}) # image toolkit (magick/convert); from brew imagemagick-full 2026-09-03; ghostscript = PDF delegate parity
       # omniwm removed 2026-09-01 (unused)
       (emacs.override {
         withXwidgets = true;
@@ -58,6 +58,7 @@
       codex
       chezmoi # dotfile manager (declarative ~/ config); dotfiles repo TBD
       age # chezmoi 敏感文件加密 (dotfiles repo 用)
+      nushell
 
       # ── Migrated from Homebrew ────────────────────────────────────────
       antidote # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
