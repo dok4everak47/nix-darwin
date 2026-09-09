@@ -72,12 +72,47 @@
       pi-coding-agent = unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.pi-coding-agent;
     })
 
-    # ── herdr: use nixos-unstable version instead of 26.05 stable ─────
-    # 0.8.2 ("Agent multiplexer that lives in your terminal"); not in 26.05
-    # stable. The atuin-pinned `unstable` input only has 0.7.5, so track the
-    # rolling nixos-unstable channel (locked in flake.lock) for 0.8.2.
+    # ── herdr: prebuilt 0.9.0 release binary (2026-09-09) ──────────────
+    # nixpkgs (26.05 stable, atuin-pinned `unstable`, and rolling
+    # nixos-unstable as of rev d6524aa/2026-09-08) all still ship herdr 0.8.2;
+    # upstream 0.9.0 (2026-09-07) adds multi-machine SSH management
+    # (`herdr machine`), independent client views, Muse agent detection.
+    # Fetch the official prebuilt release binary (aarch64-darwin only) instead
+    # of the nixpkgs source build. Hash = sha256 of the v0.9.0 release asset,
+    # verified 2026-09-09. Once nixpkgs catches up, drop this override and
+    # restore `nixos-unstable.legacyPackages...herdr`.
     (final: prev: {
-      herdr = nixos-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.herdr;
+      herdr = prev.stdenvNoCC.mkDerivation (finalAttrs: {
+        pname = "herdr";
+        version = "0.9.0";
+
+        src = prev.fetchurl {
+          url = "https://github.com/herdrdev/herdr/releases/download/v${finalAttrs.version}/herdr-macos-aarch64";
+          hash = "sha256-MrU98JhyYoBZx4mmnwKmuOKeFN3yZxFCHzRj9wwa7xc=";
+        };
+
+        dontUnpack = true;
+        strictDeps = true;
+
+        installPhase = ''
+          runHook preInstall
+          install -Dm755 $src $out/bin/herdr
+          runHook postInstall
+        '';
+
+        # macOS 27: adhoc re-sign after nix fixup (same pattern as opencode
+        # overlay — a broken/absent signature gets the binary SIGKILL'd).
+        postFixup = ''
+          /usr/bin/codesign --force --sign - $out/bin/herdr
+        '';
+
+        meta = {
+          description = "Agent-aware terminal workspace manager for AI coding agents";
+          homepage = "https://herdr.dev";
+          license = prev.lib.licenses.mit;
+          mainProgram = "herdr";
+        };
+      });
     })
 
     # codex : use unstable version
