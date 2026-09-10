@@ -15,6 +15,17 @@ in {
     enableBashCompletion = true;
   };
 
+  # ── 根治: macOS 更新覆盖 /etc/zshrc ──────────────────────────────
+  # /etc/zshrc 在 nix-darwin 的 overridable 列表里, 系统写入 Apple 原版
+  # 真实文件后 nix 不强制链接 → zsh 静默丢失 antidote/补全/alias
+  # (2026-09-10 实测: store 里 generation 189 的 /etc/zshrc 是完整的,
+  # 磁盘上的却被 09-03 的 Apple 原版占据, zsh 裸奔)。每次 rebuild 在
+  # etc 阶段之后强制 ln 回 nix 生成的版本, 被覆盖也自动恢复。
+  system.activationScripts.forceNixZshrc = {
+    deps = [ "etc" ];
+    text = "ln -sfn /etc/static/zshrc /etc/zshrc";
+  };
+
   # ── PATH additions ───────────────────────────────────────────────────
   # NOTE: cannot use `environment.variables.PATH = [ ... ]` because nix-darwin
   # writes that to /etc/launchd-environment (space-separated, no shell
