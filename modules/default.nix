@@ -10,7 +10,7 @@
     # ── System ─────────────────────────────────────────────────────────
     ./system/nix.nix
     ./system/homebrew.nix
-    ./system/users.nix # 用户声明:登录 shell 由 nix-darwin 管理(nushell)
+    ./system/users.nix # 用户声明:uid/home/knownUsers(登录 shell 见 shell/login-shell.nix)
     ./system/packages.nix
     ./system/activation.nix
     ./system/pam.nix
@@ -21,6 +21,7 @@
     ./shell/aliases.nix
     ./shell/env.nix
     ./shell/nushell.nix # 生成 ~/.config/nushell/env.nu(PATH/代理,与 zsh 同源)
+    ./shell/login-shell.nix # shell 切换器:登录 shell = 调度器,`sw nu|zsh` 即时切换
     ./shell/plugins.nix
     ./shell/functions.nix
 
