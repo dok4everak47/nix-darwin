@@ -48,6 +48,7 @@ in {
       "font-symbols-only-nerd-font"
       "forel"
       "capcap"
+      "whatcable"
       # NOTE: emacs-app intentionally absent — Nix Emacs
       # (/Applications/Nix Apps/Emacs.app) is the canonical install.
     ];
