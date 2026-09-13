@@ -24,8 +24,19 @@
   # unstable with search patch) live in modules/overlays/.
   environment.systemPackages = with pkgs;
     [
-      vim
       neovim
+      # vi / vim → neovim (PATH 级: 任何 shell、脚本、agent 一致)
+      # 起因 (2026-09-13): alias vi=nvim 只写在 environment.shellAliases →
+      # nix-darwin 生成到 /etc/zprofile, **只有登录 shell** 才读; herdr pane /
+      # tmux / bash / 脚本里的 `vi` 全都落到 pkgs.vim 的真 vim 上
+      # (实测 herdr pane: __ETC_ZPROFILE_SOURCED=unset, 无 alias)。
+      # neovim 只提供 bin/nvim, 故这里补 vi/vim 两个符号链接;
+      # 同时从列表里删掉 pkgs.vim(它也提供 bin/vi|vim, 同 profile buildEnv 会碰撞)。
+      (runCommand "vi-is-nvim" {} ''
+        mkdir -p $out/bin
+        ln -s ${neovim}/bin/nvim $out/bin/vi
+        ln -s ${neovim}/bin/nvim $out/bin/vim
+      '')
       fastfetch
       wget
       curl
