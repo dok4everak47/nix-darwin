@@ -292,11 +292,143 @@ EOF
       )
     }
 
+    # nxd-install: 安装软件子菜单 (nxd 调用, 也可独立运行)。
+    #   🔍 nix: nix-search 搜索(频道=26.05, 与 flake.lock 的 nixos-26.05 匹配,
+    #      flake 升级大版本时同步改这里) → 选中 → 自动追加进 packages.nix
+    #      systemPackages 列表首行 → 询问是否立即 rebuild。
+    #   🍺 brew: 输 formula/cask 名 → brew info 自动识别类型 → brew install
+    #      → 自动追加声明进 homebrew.nix 对应列表。自定义 tap 未声明时只装
+    #      不声明(缺 tap 声明会让下次 brew bundle 报错), 由用户先声明 tap。
+    #   📝 直接编辑 packages.nix / homebrew.nix。
+    # 写文件用 awk 在列表头插入一行; 目标行格式变化时放弃并提示手动添加。
+    nxd-install() {
+      local repo="/etc/nix-darwin"
+      local sub q rows pkg name kind tap declare_ok yn k2 tmpf
+      while true; do
+        sub=$(printf '%s\n' \
+          "🔍 nix 安装 (搜索 + 自动声明 packages.nix)" \
+          "🍺 brew 安装 (安装 + 自动声明 homebrew.nix)" \
+          "📝 编辑 packages.nix" \
+          "📝 编辑 homebrew.nix" \
+          "⬅ 返回" \
+          | fzf --prompt="安装软件> " --reverse --height=50%) || return 0
+        case "$sub" in
+          *nix*安装*)
+            printf '搜索词> '
+            read -r q
+            [ -z "$q" ] && continue
+            rows=$(nix-search --channel=26.05 -m 50 --json "$q" 2>/dev/null \
+              | jq -r '[(.package_attr_name // ""), (.package_pversion // ""), (.package_description // "")] | @tsv' \
+              | sort -u)
+            [ -z "$rows" ] && { echo "✖ 无搜索结果: $q" >&2; continue; }
+            pkg=$(printf '%s\n' "$rows" \
+              | fzf --prompt="安装> " --reverse --height=60% --delimiter='\t' \
+              | cut -f1)
+            [ -z "$pkg" ] && continue
+            if ! [[ "$pkg" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
+              echo "✖ 包名含特殊字符, 请手动加进 packages.nix: $pkg" >&2
+              continue
+            fi
+            if grep -qw "$pkg" "$repo/modules/system/packages.nix"; then
+              echo "⚠ packages.nix 已有 $pkg, 跳过添加"
+            else
+              tmpf="$repo/modules/system/packages.nix.tmp"
+              awk -v pkg="      $pkg" '
+                !ins && /environment.systemPackages = with pkgs;/ {
+                  print
+                  if ((getline nxt) <= 0) exit 2
+                  print nxt
+                  if (nxt !~ /^[[:space:]]*\[[[:space:]]*$/) exit 2
+                  print pkg
+                  ins = 1
+                  next
+                }
+                { print }
+                END { if (!ins) exit 3 }
+              ' "$repo/modules/system/packages.nix" > "$tmpf" \
+                && mv "$tmpf" "$repo/modules/system/packages.nix" \
+                || { rm -f "$tmpf"; echo "✖ packages.nix 列表格式与预期不符, 请手动添加 $pkg" >&2; continue; }
+              echo "✓ 已加入 packages.nix: $pkg (rebuild 后生效)"
+            fi
+            printf '立即 rebuild 生效? (y/N) '
+            read -r yn
+            [[ "$yn" == y* ]] && (cd "$repo" && sudo darwin-rebuild switch --flake .#dok4ever-mac)
+            ;;
+          *brew*安装*)
+            printf 'brew 名字 (formula 或 cask, 支持 user/tap/name)> '
+            read -r name
+            [ -z "$name" ] && continue
+            if ! [[ "$name" =~ ^[a-zA-Z0-9][a-zA-Z0-9/_.@+-]*$ ]]; then
+              echo "✖ 名字含异常字符: $name" >&2
+              continue
+            fi
+            if brew info --formula "$name" >/dev/null 2>&1; then
+              kind=formula
+              tap=$(brew info --json=v2 --formula "$name" 2>/dev/null | jq -r '.formula[0].tap // ""')
+            elif brew info --cask "$name" >/dev/null 2>&1; then
+              kind=cask
+              tap=$(brew info --json=v2 --cask "$name" 2>/dev/null | jq -r '.casks[0].tap // ""')
+            else
+              echo "✖ brew 找不到: $name (formula / cask 都没命中)" >&2
+              continue
+            fi
+            if [[ "$kind" == formula ]]; then
+              brew install "$name" || continue
+            else
+              brew install --cask "$name" || continue
+            fi
+            declare_ok=1
+            if [[ -n "$tap" && "$tap" != homebrew/* ]] && ! grep -qF "$tap" "$repo/modules/system/homebrew.nix"; then
+              echo "⚠ tap '$tap' 未在 homebrew.nix 声明 — 跳过自动声明; 请先声明 tap 并加条目, 否则下次 rebuild 会把它清掉" >&2
+              declare_ok=0
+            fi
+            if [[ "$declare_ok" == 1 ]]; then
+              if grep -qw "$name" "$repo/modules/system/homebrew.nix"; then
+                echo "⚠ homebrew.nix 已有 $name, 跳过声明"
+              else
+                if [[ "$kind" == cask ]]; then
+                  tmpf="$repo/modules/system/homebrew.nix.tmp"
+                  awk -v e="      \"$name\"" '
+                    !ins && /casks = \[/ { print; print e; ins = 1; next }
+                    { print }
+                    END { if (!ins) exit 3 }
+                  ' "$repo/modules/system/homebrew.nix" > "$tmpf" \
+                    && mv "$tmpf" "$repo/modules/system/homebrew.nix" \
+                    || { rm -f "$tmpf"; echo "✖ casks 列表格式异常, 请手动声明" >&2; continue; }
+                  echo "✓ 已声明进 casks: $name"
+                else
+                  tmpf="$repo/modules/system/homebrew.nix.tmp"
+                  awk -v e="      \"$name\"" '
+                    !ins && /brews = \[/ { print; print e; ins = 1; next }
+                    { print }
+                    END { if (!ins) exit 3 }
+                  ' "$repo/modules/system/homebrew.nix" > "$tmpf" \
+                    && mv "$tmpf" "$repo/modules/system/homebrew.nix" \
+                    || { rm -f "$tmpf"; echo "✖ brews 列表格式异常, 请手动声明" >&2; continue; }
+                  echo "✓ 已声明进 brews: $name"
+                fi
+              fi
+            fi
+            echo "✓ 已安装 $name ($kind); 下次 rebuild 自动转正"
+            ;;
+          *packages.nix*)
+            (cd "$repo" && $EDITOR modules/system/packages.nix) ;;
+          *homebrew.nix*)
+            (cd "$repo" && $EDITOR modules/system/homebrew.nix) ;;
+          *)
+            return 0 ;;
+        esac
+        printf '\n↩ 回车返回安装菜单 / q 回主菜单> '
+        read -r k2
+        [[ "$k2" == q* ]] && return 0
+      done
+    }
+
     # nxd: nix-darwin TUI — fzf 菜单一站式操作 /etc/nix-darwin。
-    #   $ nxd          # 菜单: 编辑(分类/全局) / rebuild / diff / commit&push / rollback
+    #   $ nxd   # 菜单: 安装(nix/brew) / 编辑(分类/全局) / rebuild / diff / commit&push / rollback
     # 任何目录可用;编辑走 $EDITOR(fzf 带预览),rebuild 走 sudo(前台输密码)。
     # 注意: 本函数体内严禁 dollar-quote(两个相邻单引号)写法, 会截断 Nix indented 字符串,
-    # 换行用 printf, tab 用 awk "\t" / fzf \t 正则。
+    # 换行用 printf, tab 用 awk 双引号转义 / fzf 反斜杠t 正则。
     nxd() {
       local repo="/etc/nix-darwin"
       local menu cat pats files file yn k
@@ -304,6 +436,7 @@ EOF
         menu=$(printf '%s\n' \
           "📝 编辑配置 (全局搜索)" \
           "📂 分类浏览编辑 (软件/shell/system/...)" \
+          "📦 安装软件 (nix / brew)" \
           "🔨 rebuild (switch)" \
           "👀 查看未提交改动" \
           "✅ commit & push" \
@@ -332,7 +465,8 @@ EOF
               | fzf --prompt="分类> " --reverse --height=50%) || continue
             case "$cat" in
               *安装*)
-                files=$(printf '%s\n' "modules/system/packages.nix" "modules/system/homebrew.nix") ;;
+                files=""
+                nxd-install ;;
               *shell*)
                 files=$(git -C "$repo" ls-files 'modules/shell') ;;
               *system*)
@@ -348,6 +482,7 @@ EOF
               *)
                 continue ;;
             esac
+            [ -z "$files" ] && continue
             file=$(printf '%s\n' "$files" \
               | awk -F/ '{print $NF "\t" $0}' \
               | fzf --prompt="open> " --reverse --height=60% \
@@ -357,6 +492,8 @@ EOF
               | cut -f2) || continue
             [ -n "$file" ] || continue
             (cd "$repo" && $EDITOR "$file") ;;
+          *安装软件*)
+            nxd-install ;;
           *rebuild*)
             (cd "$repo" && sudo darwin-rebuild switch --flake .#dok4ever-mac) ;;
           *查看*)
