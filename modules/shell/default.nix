@@ -2,13 +2,15 @@
   config,
   pkgs,
   ...
-}: let
-  shared = import ../lib.nix {};
-in {
+}: {
   # ── Zsh (nix-darwin writes /etc/{zshenv,zprofile,zshrc}) ────────────
   # Autosuggestions + syntax-highlighting + fzf-tab come from antidote
   # (~/.zsh_plugins.txt), so we don't enable nix-darwin's built-in copies
   # (they'd double-source and conflict).
+  #
+  # ZDOTDIR 迁移 (2026-09-17, 见 shell/zdotdir.nix): 交互/登录配置已搬进
+  # /etc/zdotdir (nix store), programs.zsh 只负责生成 /etc/{zshenv,zprofile,
+  # zshrc} 基座 (history/bindkey/enableCompletion 尾块/set-environment)。
   programs.zsh = {
     enable = true;
     enableCompletion = true;
@@ -17,30 +19,28 @@ in {
 
   # ── 根治: macOS 更新覆盖 /etc/zshrc + /etc/zprofile ────────────────
   # 两个文件都在 nix-darwin 的 overridable 列表里, 系统写入 Apple 原版
-  # 真实文件后 nix 不强制链接 → zsh 静默丢失 antidote/补全/alias
-  # (2026-09-10 实测: store 里 generation 189 的 /etc/zshrc 是完整的,
-  # 磁盘上的却被 09-03 的 Apple 原版占据, zsh 裸奔)。每次 rebuild 在
-  # etc 阶段之后强制 ln 回 nix 生成的版本, 被覆盖也自动恢复。
-  # /etc/zprofile 是 environment.shellAliases 的落点(登录 shell 的别名),
-  # 同样会被 macOS 更新换成真文件 → 一起 relink。
+  # 真实文件后 nix 不强制链接 (2026-09-10 / 2026-09-17 两次实测)。
+  # ZDOTDIR 迁移后被盖已无功能影响 (配置在 /etc/zdotdir, 见 shell/zdotdir.nix),
+  # 钩子保留: 拉回 nix 版维持托管确定性。/etc/zshenv 是 ZDOTDIR 入口
+  # (Apple 从不写它, 纯保险) → 一起 relink。
   system.activationScripts.forceNixShellEtc = {
     deps = [ "etc" ];
     text = ''
       ln -sfn /etc/static/zshrc /etc/zshrc
       ln -sfn /etc/static/zprofile /etc/zprofile
+      ln -sfn /etc/static/zshenv /etc/zshenv
     '';
   };
 
-  # ── PATH additions ───────────────────────────────────────────────────
-  # NOTE: cannot use `environment.variables.PATH = [ ... ]` because nix-darwin
-  # writes that to /etc/launchd-environment (space-separated, no shell
-  # expansion); $HOME/$path must be evaluated at shell startup, so we use
-  # programs.zsh.shellInit (runs for every zsh, including non-interactive).
-  # Re-asserted in plugins.nix interactiveShellInit after `brew shellenv`.
-  programs.zsh.shellInit = shared.pathInit;
+  # ── PATH additions + ZDOTDIR ────────────────────────────────────────
+  # Moved to shell/zdotdir.nix (programs.zsh.shellInit → /etc/zshenv)。
+  # 原 NOTE: 不能用 environment.variables.PATH —— nix-darwin 写进
+  # /etc/launchd-environment (空格分隔, 无 shell 展开), $HOME/$path 必须
+  # 在 shell 启动时求值。
 
   # ── Prompt: pure (sindresorhus/pure) ─────────────────────────────────
-  # pure self-activates via antidote in plugins.nix (interactiveShellInit):
+  # pure self-activates via antidote in plugins.nix (zshRc, assembled into
+  # /etc/zdotdir/.zshrc):
   # the bundle sources pure.plugin.zsh, which ends with prompt_pure_setup.
   # IMPORTANT: nix-darwin's zsh module ships a DEFAULT promptInit that runs
   # `prompt suse`, and it runs AFTER interactiveShellInit in /etc/zshrc -

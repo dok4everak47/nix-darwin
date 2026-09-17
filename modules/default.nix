@@ -19,6 +19,7 @@
     # ── Shell ──────────────────────────────────────────────────────────
     ./shell/default.nix
     ./shell/aliases.nix
+    ./shell/zdotdir.nix # ZDOTDIR 迁移: 交互/登录配置进 /etc/zdotdir (免疫 macOS 更新), 见文件头
     ./shell/env.nix
     ./shell/nushell.nix # 生成 ~/.config/nushell/env.nu(PATH/代理,与 zsh 同源)
     ./shell/login-shell.nix # shell 切换器:登录 shell = 调度器,`sw nu|zsh` 即时切换

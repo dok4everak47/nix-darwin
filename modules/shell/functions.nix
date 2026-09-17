@@ -13,7 +13,9 @@ in {
   # stays reusable and easy to read. If you prefer these to live outside
   # nix (e.g. ~/.zshrc.local or a personal dotfiles repo), delete this
   # file and remove it from shell/default.nix imports.
-  programs.zsh.interactiveShellInit = ''
+  # Assembled into /etc/zdotdir/.zshrc by shell/zdotdir.nix (ZDOTDIR 迁移,
+  # 见该文件头注释)。
+  dok4ever.shell.zshRc = ''
     # dsh update
     dsh-update() {
       (

@@ -6,9 +6,10 @@
   shared = import ../lib.nix {};
 in {
   # ── Interactive zsh init ─────────────────────────────────────────────
-  # nix-darwin sources this in /etc/zshrc AFTER compinit setup; it runs
-  # before the user's ~/.zshrc.
-  programs.zsh.interactiveShellInit = ''
+  # Assembled into /etc/zdotdir/.zshrc by shell/zdotdir.nix (ZDOTDIR 迁移:
+  # macOS 更新盖 /etc/zshrc 不再影响 zsh)。执行位置 = /etc/zshrc 基座之后、
+  # 用户 ~/.zshrc 之前 (zdotdir 尾部 source) —— 与迁移前顺序一致。
+  dok4ever.shell.zshRc = ''
     # Aliases starting with `-` can't live in environment.shellAliases
     # (nix-darwin writes those to /etc/zprofile, where zsh errors with
     # "bad option: -="). Define them here with `alias --` in interactive
