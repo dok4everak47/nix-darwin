@@ -34,6 +34,14 @@ in {
         name = "realskyrin/tap";
         trusted = true;
       }
+      {
+        name = "kamillobinski/thock";
+        trusted = true;
+      }
+      {
+        name = "abue-ammar/tinycast";
+        trusted = true;
+      }
     ];
 
     brews = [
@@ -49,6 +57,7 @@ in {
       "forel"
       "capcap"
       "whatcable"
+      "tinycast"
       # NOTE: emacs-app intentionally absent — Nix Emacs
       # (/Applications/Nix Apps/Emacs.app) is the canonical install.
     ];
