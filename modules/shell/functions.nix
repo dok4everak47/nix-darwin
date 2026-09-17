@@ -291,5 +291,47 @@ EOF
           nix develop --command bash -c "cd '$proj' && exec ${home}/Project/karakuri/target/debug/karakuri"
       )
     }
+
+    # nxd: nix-darwin TUI — fzf 菜单一站式操作 /etc/nix-darwin。
+    #   $ nxd          # 菜单: 编辑 / rebuild / diff / commit&push / rollback
+    # 任何目录可用;编辑走 $EDITOR(fzf 带预览),rebuild 走 sudo(前台输密码)。
+    nxd() {
+      local repo="/etc/nix-darwin"
+      local menu file yn k
+      while true; do
+        menu=$(printf '%s\n' \
+          "📝 编辑配置文件" \
+          "🔨 rebuild (switch)" \
+          "👀 查看未提交改动" \
+          "✅ commit & push" \
+          "↩️  rollback 上一代" \
+          "🚪 退出" \
+          | fzf --prompt="nix-darwin [$(git -C "$repo" branch --show-current)]> " \
+            --header="$(git -C "$repo" status -s | wc -l | tr -d ' ') 个未提交文件" \
+            --reverse --height=40%) || return 0
+        case "$menu" in
+          *编辑*)
+            file=$(git -C "$repo" ls-files '*.nix' \
+              | fzf --prompt="open> " --reverse --height=60% \
+                --preview="bat --color=always --style=numbers --line-range=:200 '$repo/{}'" \
+                --preview-window=right:60%:wrap) || continue
+            (cd "$repo" && $EDITOR "$file") ;;
+          *rebuild*)
+            (cd "$repo" && sudo darwin-rebuild switch --flake .#dok4ever-mac) ;;
+          *查看*)
+            git -C "$repo" --no-pager -c color.ui=always diff HEAD | less -R ;;
+          *commit*)
+            (cd "$repo" && git add -A && git commit && git push && git push gitea HEAD) ;;
+          *rollback*)
+            printf '确认 rollback 到上一代? (y/N) '
+            read -r yn
+            [[ "$yn" == y* ]] && sudo darwin-rebuild switch --rollback ;;
+          *退出*) return 0 ;;
+        esac
+        printf '\n↩ 回车返回菜单 / q 退出> '
+        read -r k
+        [[ "$k" == q* ]] && return 0
+      done
+    }
   '';
 }
