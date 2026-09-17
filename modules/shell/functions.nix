@@ -303,7 +303,7 @@ EOF
     # 写文件用 awk 在列表头插入一行; 目标行格式变化时放弃并提示手动添加。
     nxd-install() {
       local repo="/etc/nix-darwin"
-      local sub q rows pkg name kind tap declare_ok yn k2 tmpf
+      local sub pkg name kind tap declare_ok yn k2 tmpf install_rc added
       while true; do
         sub=$(printf '%s\n' \
           "🔍 nix 安装 (搜索 + 自动声明 packages.nix)" \
@@ -314,24 +314,32 @@ EOF
           | fzf --prompt="安装软件> " --reverse --height=50%) || return 0
         case "$sub" in
           *nix*安装*)
-            printf '搜索词> '
-            read -r q
-            [ -z "$q" ] && continue
-            rows=$(nix-search --channel=26.05 -m 50 --json "$q" 2>/dev/null \
-              | jq -r '[(.package_attr_name // ""), (.package_pversion // ""), (.package_description // "")] | @tsv' \
-              | sort -u)
-            [ -z "$rows" ] && { echo "✖ 无搜索结果: $q" >&2; continue; }
-            pkg=$(printf '%s\n' "$rows" \
-              | fzf --prompt="安装> " --reverse --height=60% --delimiter='\t' \
-              | cut -f1)
-            [ -z "$pkg" ] && continue
-            if ! [[ "$pkg" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
-              echo "✖ 包名含特殊字符, 请手动加进 packages.nix: $pkg" >&2
+            rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t
+            touch /tmp/nxd-install-cart
+            fzf --phony --query="" \
+              --prompt="nix 搜索> " \
+              --header="输入即实时搜索 · 空格 选择/取消 · Enter 安装已选 · Esc 取消" \
+              --multi --reverse --height=90% --delimiter='\t' \
+              --bind="space:toggle+execute-silent(sh -c 'if grep -qxF -e {1} /tmp/nxd-install-cart 2>/dev/null; then grep -vxF -e {1} /tmp/nxd-install-cart > /tmp/nxd-install-cart.t && mv /tmp/nxd-install-cart.t /tmp/nxd-install-cart; else printf \"%s\n\" {1} >> /tmp/nxd-install-cart; fi')+refresh-preview" \
+              --bind="change:reload-sync(nix-search --channel=26.05 -m 50 --json '{q}' 2>/dev/null | jq -r '[(.package_attr_name // \"\"), (.package_pversion // \"\"), (.package_description // \"\")] | @tsv' | sort -u)" \
+              --preview="printf '▸ {1} @ {2}\n\n'; printf '%s\n' '{3}'; printf '\n── 已选 (空格 选择/取消) ──\n'; cat /tmp/nxd-install-cart 2>/dev/null | sed 's/^/  ✓ /'; [ -s /tmp/nxd-install-cart ] || echo '  (空)'" \
+              --preview-window=right:45%:wrap >/dev/null
+            install_rc=$?
+            if [[ "$install_rc" -ne 0 ]]; then
+              rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t
               continue
             fi
-            if grep -qw "$pkg" "$repo/modules/system/packages.nix"; then
-              echo "⚠ packages.nix 已有 $pkg, 跳过添加"
-            else
+            added=0
+            while IFS= read -r pkg; do
+              [ -z "$pkg" ] && continue
+              if ! [[ "$pkg" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
+                echo "✖ 包名含特殊字符, 跳过: $pkg" >&2
+                continue
+              fi
+              if grep -qw "$pkg" "$repo/modules/system/packages.nix"; then
+                echo "⚠ packages.nix 已有 $pkg, 跳过"
+                continue
+              fi
               tmpf="$repo/modules/system/packages.nix.tmp"
               awk -v pkg="      $pkg" '
                 !ins && /environment.systemPackages = with pkgs;/ {
@@ -347,8 +355,14 @@ EOF
                 END { if (!ins) exit 3 }
               ' "$repo/modules/system/packages.nix" > "$tmpf" \
                 && mv "$tmpf" "$repo/modules/system/packages.nix" \
-                || { rm -f "$tmpf"; echo "✖ packages.nix 列表格式与预期不符, 请手动添加 $pkg" >&2; continue; }
-              echo "✓ 已加入 packages.nix: $pkg (rebuild 后生效)"
+                || { rm -f "$tmpf"; echo "✖ packages.nix 列表格式与预期不符, $pkg 未添加 (请手动)" >&2; continue; }
+              echo "✓ 已加入 packages.nix: $pkg"
+              added=$((added + 1))
+            done < /tmp/nxd-install-cart
+            rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t
+            if [[ "$added" -eq 0 ]]; then
+              echo "(没有新增声明)"
+              continue
             fi
             printf '立即 rebuild 生效? (y/N) '
             read -r yn
