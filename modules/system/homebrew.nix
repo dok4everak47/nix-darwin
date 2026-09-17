@@ -42,6 +42,10 @@ in {
         name = "abue-ammar/tinycast";
         trusted = true;
       }
+      {
+        name = "rana-gmbh/netfluss";
+        trusted = true;
+      }
     ];
 
     brews = [
@@ -58,6 +62,7 @@ in {
       "capcap"
       "whatcable"
       "tinycast"
+      "netfluss"
       # NOTE: emacs-app intentionally absent — Nix Emacs
       # (/Applications/Nix Apps/Emacs.app) is the canonical install.
     ];
