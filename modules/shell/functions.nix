@@ -321,7 +321,7 @@ EOF
               --header="输入即实时搜索 · 空格 选择/取消 · Enter 安装已选 · Esc 取消" \
               --multi --reverse --height=90% --delimiter='\t' \
               --bind="space:toggle+execute-silent(sh -c 'if grep -qxF -e {1} /tmp/nxd-install-cart 2>/dev/null; then grep -vxF -e {1} /tmp/nxd-install-cart > /tmp/nxd-install-cart.t && mv /tmp/nxd-install-cart.t /tmp/nxd-install-cart; else printf \"%s\n\" {1} >> /tmp/nxd-install-cart; fi')+refresh-preview" \
-              --bind="change:reload-sync(nix-search --channel=26.05 -m 50 --json '{q}' 2>/dev/null | jq -r '[(.package_attr_name // \"\"), (.package_pversion // \"\"), (.package_description // \"\")] | @tsv' | sort -u)" \
+              --bind="change:reload-sync(nix-search --channel=26.05 -m 50 --json '{q}' 2>/dev/null | jq -r '\"\(.package_attr_name // \"\")\t\(.package_pversion // \"\")\t\(.package_description // \"\")\" | sort -u)" \
               --preview="printf '▸ {1} @ {2}\n\n'; printf '%s\n' '{3}'; printf '\n── 已选 (空格 选择/取消) ──\n'; cat /tmp/nxd-install-cart 2>/dev/null | sed 's/^/  ✓ /'; [ -s /tmp/nxd-install-cart ] || echo '  (空)'" \
               --preview-window=right:45%:wrap >/dev/null
             install_rc=$?
