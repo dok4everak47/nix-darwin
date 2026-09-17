@@ -293,14 +293,17 @@ EOF
     }
 
     # nxd: nix-darwin TUI — fzf 菜单一站式操作 /etc/nix-darwin。
-    #   $ nxd          # 菜单: 编辑 / rebuild / diff / commit&push / rollback
+    #   $ nxd          # 菜单: 编辑(分类/全局) / rebuild / diff / commit&push / rollback
     # 任何目录可用;编辑走 $EDITOR(fzf 带预览),rebuild 走 sudo(前台输密码)。
+    # 注意: 本函数体内严禁 dollar-quote(两个相邻单引号)写法, 会截断 Nix indented 字符串,
+    # 换行用 printf, tab 用 awk "\t" / fzf \t 正则。
     nxd() {
       local repo="/etc/nix-darwin"
-      local menu file yn k
+      local menu cat pats files file yn k
       while true; do
         menu=$(printf '%s\n' \
-          "📝 编辑配置文件" \
+          "📝 编辑配置 (全局搜索)" \
+          "📂 分类浏览编辑 (软件/shell/system/...)" \
           "🔨 rebuild (switch)" \
           "👀 查看未提交改动" \
           "✅ commit & push" \
@@ -308,13 +311,51 @@ EOF
           "🚪 退出" \
           | fzf --prompt="nix-darwin [$(git -C "$repo" branch --show-current)]> " \
             --header="$(git -C "$repo" status -s | wc -l | tr -d ' ') 个未提交文件" \
-            --reverse --height=40%) || return 0
+            --reverse --height=50%) || return 0
         case "$menu" in
-          *编辑*)
+          *全局搜索*)
             file=$(git -C "$repo" ls-files '*.nix' \
               | fzf --prompt="open> " --reverse --height=60% \
                 --preview="bat --color=always --style=numbers --line-range=:200 '$repo/{}'" \
                 --preview-window=right:60%:wrap) || continue
+            (cd "$repo" && $EDITOR "$file") ;;
+          *分类浏览*)
+            cat=$(printf '%s\n' \
+              "📦 安装软件 (packages / homebrew)" \
+              "🐚 shell" \
+              "⚙️ system" \
+              "🧩 programs" \
+              "🔧 fixes" \
+              "🔗 overlays" \
+              "🌳 核心 (flake / lib / AGENTS)" \
+              "⬅ 返回" \
+              | fzf --prompt="分类> " --reverse --height=50%) || continue
+            case "$cat" in
+              *安装*)
+                files=$(printf '%s\n' "modules/system/packages.nix" "modules/system/homebrew.nix") ;;
+              *shell*)
+                files=$(git -C "$repo" ls-files 'modules/shell') ;;
+              *system*)
+                files=$(git -C "$repo" ls-files 'modules/system') ;;
+              *programs*)
+                files=$(git -C "$repo" ls-files 'modules/programs') ;;
+              *fixes*)
+                files=$(git -C "$repo" ls-files 'modules/fixes') ;;
+              *overlays*)
+                files=$(git -C "$repo" ls-files 'modules/overlays') ;;
+              *核心*)
+                files=$(printf '%s\n' "flake.nix" "modules/lib.nix" "modules/default.nix" "AGENTS.md") ;;
+              *)
+                continue ;;
+            esac
+            file=$(printf '%s\n' "$files" \
+              | awk -F/ '{print $NF "\t" $0}' \
+              | fzf --prompt="open> " --reverse --height=60% \
+                --with-nth=1 --delimiter='\t' \
+                --preview="bat --color=always --style=numbers --line-range=:200 '$repo/{2}'" \
+                --preview-window=right:60%:wrap \
+              | cut -f2) || continue
+            [ -n "$file" ] || continue
             (cd "$repo" && $EDITOR "$file") ;;
           *rebuild*)
             (cd "$repo" && sudo darwin-rebuild switch --flake .#dok4ever-mac) ;;
