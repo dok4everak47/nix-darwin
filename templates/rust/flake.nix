@@ -23,7 +23,8 @@
             export all_proxy=socks5://127.0.0.1:7890 ALL_PROXY=socks5://127.0.0.1:7890
             export no_proxy=localhost,127.0.0.1,::1 NO_PROXY=localhost,127.0.0.1,::1
           fi
-          echo "🦀 $(rustc --version)"
+          # NOTE: shellHook 的输出会在**每次** direnv 加载时打印到终端,
+          # 不要在这里 echo 版本号之类的提示 (2026-09-17 已清除).
         '';
       };
     });
