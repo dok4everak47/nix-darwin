@@ -314,19 +314,38 @@ EOF
           | fzf --prompt="安装软件> " --reverse --height=50%) || return 0
         case "$sub" in
           *nix*安装*)
-            rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t
+            rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t /tmp/nxd-installed-attrs
             touch /tmp/nxd-install-cart
+            awk '/environment.systemPackages = with pkgs;/{f=1;next} f&&/^[[:space:]]*\]/{exit} f&&/^[[:space:]]*\[$/{next} f&&/^[[:space:]]*#/{next} f{gsub(/^[[:space:]]+|[[:space:]]+$/,"");if($0!="")print}' "$repo/modules/system/packages.nix" > /tmp/nxd-installed-attrs
+            cat > /tmp/nxd-reload.sh <<'NXDEOF'
+#!/bin/sh
+[ -n "$FZF_QUERY" ] || exit 0
+nix-search --channel=26.05 -m 50 --json "$FZF_QUERY" 2>/dev/null \
+| jq -r '"\(.package_attr_name // "")\t\(.package_pversion // "")\t\(.package_description // "")\t\((.package_programs // []) | join(" "))"' \
+| sort -u \
+| awk -F'\t' -v OFS='\t' 'NR==FNR{i[$0]=1;next} $1 in i{print $0, "\033[32m✓ 已装\033[0m";next} {print}' /tmp/nxd-installed-attrs -
+exit 0
+NXDEOF
+            cat > /tmp/nxd-toggle.sh <<'NXDEOF'
+#!/bin/sh
+[ -n "$1" ] || exit 0
+if grep -qxF -e "$1" /tmp/nxd-install-cart 2>/dev/null; then
+  grep -vxF -e "$1" /tmp/nxd-install-cart > /tmp/nxd-install-cart.t && mv /tmp/nxd-install-cart.t /tmp/nxd-install-cart
+else
+  printf '%s\n' "$1" >> /tmp/nxd-install-cart
+fi
+NXDEOF
             fzf --phony --query="" \
               --prompt="nix 搜索> " \
               --header="输入即实时搜索 · 空格 选择/取消 · Enter 安装已选 · Esc 取消" \
-              --multi --reverse --height=90% --delimiter='\t' \
-              --bind="space:toggle+execute-silent(sh -c 'if grep -qxF -e {1} /tmp/nxd-install-cart 2>/dev/null; then grep -vxF -e {1} /tmp/nxd-install-cart > /tmp/nxd-install-cart.t && mv /tmp/nxd-install-cart.t /tmp/nxd-install-cart; else printf \"%s\\n\" {1} >> /tmp/nxd-install-cart; fi')+refresh-preview" \
-              --bind="change:reload-sync([ -n \"\$FZF_QUERY\" ] && nix-search --channel=26.05 -m 50 --json \"\$FZF_QUERY\" 2>/dev/null | jq -r '\"\(.package_attr_name // \"\")\t\(.package_pversion // \"\")\t\(.package_description // \"\")\t\((.package_programs // []) | join(\" \"))\"' | sort -u || true)" \
-              --preview="printf '▸ {1} @ {2}\n\n'; printf '%s\n' '{3}'; printf '\n命令: %s\n' '{4}'; cat /tmp/nxd-install-cart 2>/dev/null | sed 's/^/  ✓ /'; [ -s /tmp/nxd-install-cart ] || echo '  (空)'" \
+              --multi --ansi --reverse --height=90% --delimiter='\t' \
+              --bind="space:toggle+execute-silent(sh /tmp/nxd-toggle.sh '{1}')+refresh-preview" \
+              --bind="change:reload-sync(sh /tmp/nxd-reload.sh)" \
+              --preview="printf '▸ {1} @ {2}\n\n'; printf '%s\n' '{3}'; printf '\n命令: %s\n' '{4}'; printf '\n── 已选 (空格 选择/取消) ──\n'; cat /tmp/nxd-install-cart 2>/dev/null | sed 's/^/  ✓ /'; [ -s /tmp/nxd-install-cart ] || echo '  (空)'" \
               --preview-window=right:45%:wrap >/dev/null </dev/null
             install_rc=$?
             if [[ "$install_rc" -ne 0 ]]; then
-              rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t
+              rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t /tmp/nxd-installed-attrs
               continue
             fi
             added=0
@@ -359,7 +378,7 @@ EOF
               echo "✓ 已加入 packages.nix: $pkg"
               added=$((added + 1))
             done < /tmp/nxd-install-cart
-            rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t
+            rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t /tmp/nxd-installed-attrs
             if [[ "$added" -eq 0 ]]; then
               echo "(没有新增声明)"
               continue
