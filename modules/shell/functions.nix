@@ -335,7 +335,7 @@ else
   printf '%s\n' "$1" >> /tmp/nxd-install-cart
 fi
 NXDEOF
-            fzf --phony --query="" \
+            COLORTERM=truecolor fzf --phony --query="" \
               --prompt="nix 搜索> " \
               --header="输入即实时搜索 · 空格 选择/取消 · Enter 安装已选 · Esc 取消" \
               --multi --ansi --reverse --height=90% --delimiter='\t' \
