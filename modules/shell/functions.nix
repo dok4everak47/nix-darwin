@@ -336,7 +336,7 @@ EOF
                 echo "✖ 包名含特殊字符, 跳过: $pkg" >&2
                 continue
               fi
-              if grep -qw "$pkg" "$repo/modules/system/packages.nix"; then
+              if grep -qE "^[[:space:]]*$pkg[[:space:]]*\$" "$repo/modules/system/packages.nix"; then
                 echo "⚠ packages.nix 已有 $pkg, 跳过"
                 continue
               fi
@@ -397,7 +397,7 @@ EOF
               declare_ok=0
             fi
             if [[ "$declare_ok" == 1 ]]; then
-              if grep -qw "$name" "$repo/modules/system/homebrew.nix"; then
+              if grep -qE "^[[:space:]]*\"?$name\"?[[:space:]]*\$|name = \"$name\";" "$repo/modules/system/homebrew.nix"; then
                 echo "⚠ homebrew.nix 已有 $name, 跳过声明"
               else
                 if [[ "$kind" == cask ]]; then
@@ -423,7 +423,11 @@ EOF
                 fi
               fi
             fi
-            echo "✓ 已安装 $name ($kind); 下次 rebuild 自动转正"
+            if [[ "$declare_ok" == 1 ]]; then
+              echo "✓ 已安装 $name ($kind); 声明已入 homebrew.nix, 下次 rebuild 自动转正"
+            else
+              echo "✖ 已安装 $name ($kind) 但未声明 — 下次 rebuild 会被 cleanup 清掉, 请尽快声明 tap + 条目"
+            fi
             ;;
           *packages.nix*)
             (cd "$repo" && $EDITOR modules/system/packages.nix) ;;
@@ -445,7 +449,7 @@ EOF
     # 换行用 printf, tab 用 awk 双引号转义 / fzf 反斜杠t 正则。
     nxd() {
       local repo="/etc/nix-darwin"
-      local menu cat pats files file yn k
+      local menu cat files file yn k
       while true; do
         menu=$(printf '%s\n' \
           "📝 编辑配置 (全局搜索)" \
@@ -513,7 +517,7 @@ EOF
           *查看*)
             git -C "$repo" --no-pager -c color.ui=always diff HEAD | less -R ;;
           *commit*)
-            (cd "$repo" && git add -A && git commit && git push && git push gitea HEAD) ;;
+            (cd "$repo" && git add -A && git commit && { git push; git push gitea HEAD; }) ;;
           *rollback*)
             printf '确认 rollback 到上一代? (y/N) '
             read -r yn
