@@ -323,7 +323,7 @@ EOF
 nix-search --channel=26.05 -m 50 --json "$FZF_QUERY" 2>/dev/null \
 | jq -r '"\(.package_attr_name // "")\t\(.package_pversion // "")\t\(.package_description // "")\t\((.package_programs // []) | join(" "))"' \
 | sort -u \
-| awk -F'\t' -v OFS='\t' 'NR==FNR{i[$0]=1;next} $1 in i{print $0, "\033[32m✓ 已装\033[0m";next} {print}' /tmp/nxd-installed-attrs -
+| awk -F'\t' 'NR==FNR{i[$0]=1;next} $1 in i{print "\033[32m" $0 "\033[0m";next} {print}' /tmp/nxd-installed-attrs -
 exit 0
 NXDEOF
             cat > /tmp/nxd-toggle.sh <<'NXDEOF'
