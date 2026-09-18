@@ -314,7 +314,7 @@ EOF
           | fzf --cycle --prompt="安装软件> " --reverse --height=50%) || return 0
         case "$sub" in
           *nix*安装*)
-            rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t /tmp/nxd-installed-attrs
+            rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t /tmp/nxd-installed-attrs /tmp/nxd-selected.sh /tmp/nxd-remove.sh
             touch /tmp/nxd-install-cart
             awk '/environment.systemPackages = with pkgs;/{f=1;next} f&&/^[[:space:]]*\]/{exit} f&&/^[[:space:]]*\[$/{next} f&&/^[[:space:]]*#/{next} f{gsub(/^[[:space:]]+|[[:space:]]+$/,"");if($0!="")print}' "$repo/modules/system/packages.nix" > /tmp/nxd-installed-attrs
             cat > /tmp/nxd-reload.sh <<'NXDEOF'
@@ -342,21 +342,41 @@ else
   printf '%s\n' "$1" >> /tmp/nxd-install-cart
 fi
 NXDEOF
+            cat > /tmp/nxd-selected.sh <<'NXDEOF'
+#!/bin/sh
+# 已选应用管理: d=移除光标项(列表实时更新), Enter/Esc=返回搜索界面
+while true; do
+  [ -s /tmp/nxd-install-cart ] || { printf '\n  ✓ 已选为空 — 回搜索界面用空格添加\n'; sleep 1.5; exit 0; }
+  fzf --cycle --reverse --height=90% \
+      --border=rounded --border-label=" 已选列表 · d=移除光标项 · Enter/Esc=返回搜索 " \
+      --header="返回搜索界面后 Enter=安装全部已选" \
+      --prompt="已选> " \
+      --bind="d:execute-silent(sh /tmp/nxd-remove.sh '{1}')+reload-sync(cat /tmp/nxd-install-cart)" \
+      < /tmp/nxd-install-cart
+  break
+done
+NXDEOF
+            cat > /tmp/nxd-remove.sh <<'NXDEOF'
+#!/bin/sh
+[ -n "$1" ] || exit 0
+grep -vxF -e "$1" /tmp/nxd-install-cart > /tmp/nxd-install-cart.t 2>/dev/null && mv /tmp/nxd-install-cart.t /tmp/nxd-install-cart
+NXDEOF
             COLORTERM=truecolor fzf --phony --query="" \
               --prompt="nix 搜索> " \
-              --header="输入即实时搜索 · 空格 选择/取消 · Enter 安装已选 · Esc 取消" \
+              --header="输入即实时搜索 · 空格 选择/取消 · ctrl-s 已选列表 · Enter 安装已选 · Esc 取消" \
               --multi --ansi --cycle --reverse --height=90% \
               --delimiter='\t' --with-nth=1 --header-lines=1 \
               --border=rounded --border-label=" ⚡ nxd · nix 包搜索 " \
               --info=inline-right \
               --bind="space:toggle+execute-silent(sh /tmp/nxd-toggle.sh '{2}')+refresh-preview" \
               --bind="change:reload-sync(sh /tmp/nxd-reload.sh)" \
-              --preview="printf '▸ \033[1m{2}\033[0m  {3}\n\n{4}\n\n命令: {5}\n主页: {6}\n\n── 已选 (空格 选择/取消) ──\n'; cat /tmp/nxd-install-cart 2>/dev/null | sed 's/^/  ✓ /'; [ -s /tmp/nxd-install-cart ] || echo '  (空)'" \
+              --bind="ctrl-s:execute(sh /tmp/nxd-selected.sh)" \
+              --preview="printf '▸ {2}\033[1m'  {3}\n\n{4}\n\n命令: {5}\n主页: {6}\n\n── 已选 %s 个 (ctrl-s 管理界面) ──\n' \$(wc -l < /tmp/nxd-install-cart 2>/dev/null | tr -d '); cat /tmp/nxd-install-cart 2>/dev/null | sed 's/^/  ✓ /'; [ -s /tmp/nxd-install-cart ] || echo '  (空)'" \
               --preview-window=right:45%:wrap:border-rounded --preview-label=" 详情 " \
               >/dev/null </dev/null
             install_rc=$?
             if [[ "$install_rc" -ne 0 ]]; then
-              rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t /tmp/nxd-installed-attrs
+              rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t /tmp/nxd-installed-attrs /tmp/nxd-selected.sh /tmp/nxd-remove.sh
               continue
             fi
             added=0
@@ -389,7 +409,7 @@ NXDEOF
               echo "✓ 已加入 packages.nix: $pkg"
               added=$((added + 1))
             done < /tmp/nxd-install-cart
-            rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t /tmp/nxd-installed-attrs
+            rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t /tmp/nxd-installed-attrs /tmp/nxd-selected.sh /tmp/nxd-remove.sh
             if [[ "$added" -eq 0 ]]; then
               echo "(没有新增声明)"
               continue
