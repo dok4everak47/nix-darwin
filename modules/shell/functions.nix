@@ -311,7 +311,7 @@ EOF
           "📝 编辑 packages.nix" \
           "📝 编辑 homebrew.nix" \
           "⬅ 返回" \
-          | fzf --prompt="安装软件> " --reverse --height=50%) || return 0
+          | fzf --cycle --prompt="安装软件> " --reverse --height=50%) || return 0
         case "$sub" in
           *nix*安装*)
             rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t /tmp/nxd-installed-attrs
@@ -338,7 +338,7 @@ NXDEOF
             COLORTERM=truecolor fzf --phony --query="" \
               --prompt="nix 搜索> " \
               --header="输入即实时搜索 · 空格 选择/取消 · Enter 安装已选 · Esc 取消" \
-              --multi --ansi --reverse --height=90% --delimiter='\t' \
+              --multi --ansi --cycle --reverse --height=90% --delimiter='\t' \
               --bind="space:toggle+execute-silent(sh /tmp/nxd-toggle.sh '{1}')+refresh-preview" \
               --bind="change:reload-sync(sh /tmp/nxd-reload.sh)" \
               --preview="printf '▸ {1} @ {2}\n\n'; printf '%s\n' '{3}'; printf '\n命令: %s\n' '{4}'; printf '\n── 已选 (空格 选择/取消) ──\n'; cat /tmp/nxd-install-cart 2>/dev/null | sed 's/^/  ✓ /'; [ -s /tmp/nxd-install-cart ] || echo '  (空)'" \
@@ -462,7 +462,7 @@ NXDEOF
     }
 
     # nxd: nix-darwin TUI — fzf 菜单一站式操作 /etc/nix-darwin。
-    #   $ nxd   # 菜单: 安装(nix/brew) / 编辑(分类/全局) / rebuild / diff / commit&push / rollback
+    #   $ nxd   # 菜单: 编辑(分类/全局, 分类里含安装软件) / rebuild / diff / commit&push / rollback
     # 任何目录可用;编辑走 $EDITOR(fzf 带预览),rebuild 走 sudo(前台输密码)。
     # 注意: 本函数体内严禁 dollar-quote(两个相邻单引号)写法, 会截断 Nix indented 字符串,
     # 换行用 printf, tab 用 awk 双引号转义 / fzf 反斜杠t 正则。
@@ -473,19 +473,18 @@ NXDEOF
         menu=$(printf '%s\n' \
           "📝 编辑配置 (全局搜索)" \
           "📂 分类浏览编辑 (软件/shell/system/...)" \
-          "📦 安装软件 (nix / brew)" \
           "🔨 rebuild (switch)" \
           "👀 查看未提交改动" \
           "✅ commit & push" \
           "↩️  rollback 上一代" \
           "🚪 退出" \
-          | fzf --prompt="nix-darwin [$(git -C "$repo" branch --show-current)]> " \
+          | fzf --cycle --prompt="nix-darwin [$(git -C "$repo" branch --show-current)]> " \
             --header="$(git -C "$repo" status -s | wc -l | tr -d ' ') 个未提交文件" \
             --reverse --height=50%) || return 0
         case "$menu" in
           *全局搜索*)
             file=$(git -C "$repo" ls-files '*.nix' \
-              | fzf --prompt="open> " --reverse --height=60% \
+              | fzf --cycle --prompt="open> " --reverse --height=60% \
                 --preview="bat --color=always --style=numbers --line-range=:200 '$repo/{}'" \
                 --preview-window=right:60%:wrap) || continue
             (cd "$repo" && $EDITOR "$file") ;;
@@ -499,7 +498,7 @@ NXDEOF
               "🔗 overlays" \
               "🌳 核心 (flake / lib / AGENTS)" \
               "⬅ 返回" \
-              | fzf --prompt="分类> " --reverse --height=50%) || continue
+              | fzf --cycle --prompt="分类> " --reverse --height=50%) || continue
             case "$cat" in
               *安装*)
                 files=""
@@ -522,15 +521,13 @@ NXDEOF
             [ -z "$files" ] && continue
             file=$(printf '%s\n' "$files" \
               | awk -F/ '{print $NF "\t" $0}' \
-              | fzf --prompt="open> " --reverse --height=60% \
+              | fzf --cycle --prompt="open> " --reverse --height=60% \
                 --with-nth=1 --delimiter='\t' \
                 --preview="bat --color=always --style=numbers --line-range=:200 '$repo/{2}'" \
                 --preview-window=right:60%:wrap \
               | cut -f2) || continue
             [ -n "$file" ] || continue
             (cd "$repo" && $EDITOR "$file") ;;
-          *安装软件*)
-            nxd-install ;;
           *rebuild*)
             (cd "$repo" && sudo darwin-rebuild switch --flake .#dok4ever-mac) ;;
           *查看*)
