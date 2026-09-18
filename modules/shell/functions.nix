@@ -321,9 +321,16 @@ EOF
 #!/bin/sh
 [ -n "$FZF_QUERY" ] || exit 0
 nix-search --channel=26.05 -m 50 --json "$FZF_QUERY" 2>/dev/null \
-| jq -r '"\(.package_attr_name // "")\t\(.package_pversion // "")\t\(.package_description // "")\t\((.package_programs // []) | join(" "))"' \
+| jq -r '[(.package_attr_name // ""), (.package_pversion // ""), (.package_description // ""), ((.package_programs // []) | join(" ")), ((.package_homepage // []) | join(" "))] | @tsv' \
 | sort -u \
-| awk -F'\t' 'NR==FNR{i[$0]=1;next} $1 in i{print "\033[32m" $0 "\033[0m";next} {print}' /tmp/nxd-installed-attrs -
+| awk -F'\t' -v OFS='\t' '
+  BEGIN { print "包名                          版本    描述" }
+  NR==FNR { i[$0]=1; next }
+  {
+    d = sprintf("%-30s %-10s %-58s", substr($1,1,30), substr($2,1,10), substr($3,1,58))
+    if ($1 in i) print "\033[32m" d "\033[0m", $1, $2, $3, $4, $5
+    else print d, $1, $2, $3, $4, $5
+  }' /tmp/nxd-installed-attrs -
 exit 0
 NXDEOF
             cat > /tmp/nxd-toggle.sh <<'NXDEOF'
@@ -338,11 +345,15 @@ NXDEOF
             COLORTERM=truecolor fzf --phony --query="" \
               --prompt="nix 搜索> " \
               --header="输入即实时搜索 · 空格 选择/取消 · Enter 安装已选 · Esc 取消" \
-              --multi --ansi --cycle --reverse --height=90% --delimiter='\t' \
-              --bind="space:toggle+execute-silent(sh /tmp/nxd-toggle.sh '{1}')+refresh-preview" \
+              --multi --ansi --cycle --reverse --height=90% \
+              --delimiter='\t' --with-nth=1 --header-lines=1 \
+              --border=rounded --border-label=" ⚡ nxd · nix 包搜索 " \
+              --info=inline-right \
+              --bind="space:toggle+execute-silent(sh /tmp/nxd-toggle.sh '{2}')+refresh-preview" \
               --bind="change:reload-sync(sh /tmp/nxd-reload.sh)" \
-              --preview="printf '▸ {1} @ {2}\n\n'; printf '%s\n' '{3}'; printf '\n命令: %s\n' '{4}'; printf '\n── 已选 (空格 选择/取消) ──\n'; cat /tmp/nxd-install-cart 2>/dev/null | sed 's/^/  ✓ /'; [ -s /tmp/nxd-install-cart ] || echo '  (空)'" \
-              --preview-window=right:45%:wrap >/dev/null </dev/null
+              --preview="printf '▸ \033[1m{2}\033[0m  {3}\n\n{4}\n\n命令: {5}\n主页: {6}\n\n── 已选 (空格 选择/取消) ──\n'; cat /tmp/nxd-install-cart 2>/dev/null | sed 's/^/  ✓ /'; [ -s /tmp/nxd-install-cart ] || echo '  (空)'" \
+              --preview-window=right:45%:wrap:border-rounded --preview-label=" 详情 " \
+              >/dev/null </dev/null
             install_rc=$?
             if [[ "$install_rc" -ne 0 ]]; then
               rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t /tmp/nxd-installed-attrs
