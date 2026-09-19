@@ -12,6 +12,7 @@
     ./system/homebrew.nix
     ./system/users.nix # 用户声明:uid/home/knownUsers(登录 shell 见 shell/login-shell.nix)
     ./system/packages.nix
+    ./system/fonts.nix # 字体: DotGothic16 点阵日文 (dashboard Lain CRT 风)
     ./system/activation.nix
     ./system/pam.nix
     ./system/nitter.nix # self-hosted Nitter (x-tweet-fetcher timeline backend)
