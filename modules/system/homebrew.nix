@@ -59,7 +59,6 @@ in {
       "flowvision"
       "font-symbols-only-nerd-font"
       "forel"
-      "capcap"
       "whatcable"
       "tinycast"
       "netfluss"

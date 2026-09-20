@@ -24,6 +24,7 @@
   # unstable with search patch) live in modules/overlays/.
   environment.systemPackages = with pkgs;
     [
+      helix
       neovim
       # vi / vim → neovim (PATH 级: 任何 shell、脚本、agent 一致)
       # 起因 (2026-09-13): alias vi=nvim 只写在 environment.shellAliases →
@@ -85,7 +86,6 @@
       ripgrep
       _7zz # 7-Zip CLI (binary is `7zz`; replaces brew sevenzip)
       socat
-      zellij
 
       # ── AI coding agents (numtide/llm-agents.nix) ──────────────────────
       # Pulled from llm-agents' own pinned nixpkgs-unstable (not our stable
