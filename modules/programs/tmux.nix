@@ -14,6 +14,51 @@
     rev = "58a3dcc0d718ec0fa1c0d5a2fddd640a1ad7a5b7";
     sha256 = "0zky4qkndrs645xnxh6498zc8yj7y581sg72hh0h7b31a5jxng30";
   };
+  # ── tmux 里点 OSC 8 文件链接 → 新 pane 打开 ──────────────────────────
+  # 光标下有 file:// hyperlink(如 rustlings 输出的练习路径)时, 用 nvim 在
+  # 右侧新 pane 打开; 由 extraConfig 第 9 节的两个鼠标绑定调用。
+  openLink = pkgs.writeShellScript "tmux-open-os8-link" ''
+    uri="$1"
+    pane="$2"
+
+    case "$uri" in
+      file://*) ;;
+      *) exit 0 ;;
+    esac
+
+    raw=$(printf '%s' "$uri" | sed 's|^file://||')
+
+    if command -v python3 >/dev/null 2>&1; then
+      path=$(python3 -c 'import sys, urllib.parse; sys.stdout.write(urllib.parse.unquote(sys.argv[1]))' "$raw")
+      quoted=$(python3 -c 'import sys, shlex; sys.stdout.write(shlex.quote(sys.argv[1]))' "$path")
+    else
+      path="$raw"
+      quoted="'$raw'"
+    fi
+
+    [ -f "$path" ] || exit 0
+
+    tmux_bin="$TMUX_PROGRAM"
+    [ -n "$tmux_bin" ] || tmux_bin=tmux
+    sock="$TMUX_SOCKET"
+    editor="$EDITOR"
+    [ -n "$editor" ] || editor=nvim
+    case "$(basename "$editor")" in
+      nvim|vim|vi|hx|helix) ;;
+      *) editor=nvim ;;
+    esac
+
+    if [ -n "$sock" ]; then
+      cwd=$("$tmux_bin" -S "$sock" display-message -p -t "$pane" '#{pane_current_path}' 2>/dev/null)
+      [ -n "$cwd" ] || cwd="$HOME"
+      exec "$tmux_bin" -S "$sock" split-window -h -l 50% -c "$cwd" -t "$pane" "$editor $quoted"
+    else
+      cwd=$("$tmux_bin" display-message -p -t "$pane" '#{pane_current_path}' 2>/dev/null)
+      [ -n "$cwd" ] || cwd="$HOME"
+      exec "$tmux_bin" split-window -h -l 50% -c "$cwd" -t "$pane" "$editor $quoted"
+    fi
+  '';
+
 in {
   # ── tmux (gpakosz 集成版) ─────────────────────────────────────────────
   # 本机 tmux 由 nix-darwin 的 wrapped 二进制提供（强制 -f /etc/tmux.conf）。
@@ -81,6 +126,40 @@ in {
 
       # ── 7. 热重载（覆盖 gpakosz 的 bind r, 走 /etc/tmux.conf）────
       bind r source-file /etc/tmux.conf \; display-message "tmux.conf reloaded"
+
+      # ── 8. OSC 8 超链接转发 ─────────────────────────────
+      # xterm-ghostty 的 terminfo 不含 Hls, tmux 内置终端特性表也没有
+      # xterm-ghostty 条目 → tmux 认为外层终端不支持 OSC 8 hyperlink,
+      # 把程序(Claude Code / crush 等)发出的文件链接静默丢弃, 任何修饰键
+      # 都点不开(实测: 声明前客户端输出 0 次 OSC 8, 声明后正常转发)。
+      # 匹配的是 client termname, 见 tmux list-clients -F '#{client_termname}'。
+      # 提示: tmux 里点链接需 Cmd+Shift+click(mouse on 时 Ghostty 要求
+      # 用 Shift 逃逸鼠标捕获), 光按 Cmd 不生效。
+      set -ag terminal-features 'xterm-ghostty:hyperlinks'
+
+      # ── 9. 鼠标点 OSC 8 文件链接 = 在 tmux 新 pane 里用 nvim 打开 ────────
+      # Alt/Option+左键(M-MouseDown1Pane 在 tmux 里无默认绑定) 与 右键
+      # (MouseDown3Pane) 均可触发; 只有在光标下确实有 file:// 链接时才接管,
+      # 否则 send-keys -M 把鼠标事件原样转发给 pane 内程序(不破坏 nvim/
+      # 滚轮/pane 选择)。点击 rustlings 输出的练习路径即可在右侧新 pane
+      # 用 nvim 打开该文件(不再弹 Zed)。
+      bind -n M-MouseDown1Pane if-shell -F '#{m:file://*,#{mouse_hyperlink}}' \
+        'run-shell -b "${openLink} #{q:mouse_hyperlink} #{q:pane_id}"' \
+        'send-keys -M'
+      bind -n MouseDown3Pane if-shell -F '#{m:file://*,#{mouse_hyperlink}}' \
+        'run-shell -b "${openLink} #{q:mouse_hyperlink} #{q:pane_id}"' \
+        'send-keys -M'
+
+      # ── 10. C-a m = 切换 tmux 自己的 mouse ─────────────────────────────
+      # off 时 tmux 会向终端下发 DECRST(?1000l/?1002l/?1003l/?1006l), Ghostty
+      # 的 terminal flag mouse_event 随之归 none → 悬停链接立刻高亮+预览、
+      # Cmd+click 走系统打开; on 时恢复滚轮与上面的鼠标绑定。
+      # 这是 tmux 里「hover 高亮」唯一的实现方式: Ghostty 只在没有程序捕获
+      # 鼠标时才做链接悬停检测(Surface.zig: mouse_event == .none or
+      # (mods.shift and !mouseShiftCapture)); 而 Ghostty 的
+      # toggle_mouse_reporting 只改 config.mouse_reporting, 不动 terminal
+      # flags, 所以那个键对 hover 完全无效(已实测)。
+      bind -T prefix m set -g mouse \; display-message "tmux mouse: #{?mouse,on — 滚轮/鼠标绑定可用,off — 鼠标归 Ghostty(悬停高亮 + Cmd+click)}"
     '';
   };
 }
