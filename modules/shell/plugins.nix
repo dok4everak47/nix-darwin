@@ -94,10 +94,12 @@ in {
     # appending here — after the bundle — is the documented pattern.)
     zvm_after_init_commands+=('source ${pkgs.fzf}/share/fzf/key-bindings.zsh')
 
-    # insert 模式下连按 jk 代替 ESC 进 normal(仅 insert 生效,normal 里
-    # j/k 的移动/历史功能不受影响)。必须在第一个 prompt(zvm init)之前
-    # 设置,这里满足。若觉得 lone-j 提交有延迟,可再调 ZVM_KEYTIMEOUT(默认 0.4s)。
-    ZVM_VI_INSERT_ESCAPE_BINDKEY=jk
+    # insert 模式连按 jk 代替 ESC —— 2026-09-20 移除。
+    # 它让每个 lone-j 都要等 ZVM_KEYTIMEOUT(默认 0.4s) 判断是否按 k，
+    # 是「Ghostty 里输入 j 有延迟」的根因（zvm readkey 引擎接管 "j"，
+    # pty 实测回显 ~0.4s+；绑定走插件内部引擎，bindkey dump 看不到）。
+    # 退出插入模式改按 ESC。若想恢复，加回下行并同时调低 ZVM_KEYTIMEOUT(如 0.1)：
+    #   ZVM_VI_INSERT_ESCAPE_BINDKEY=jk
 
     # bun completions
     [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
