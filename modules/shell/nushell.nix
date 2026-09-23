@@ -8,8 +8,10 @@ let
   shared = import ../lib.nix { };
 
   # ── 从单一来源生成环境变量赋值 ──────────────────────────────────────
-  # environment.variables 是 nix-darwin 写入 launchd / zsh(set-environment)
-  # 的同一来源。此处复用它生成 nu 语法,保证 zsh 与 nushell 永不漂移:
+  # environment.variables 被 nix-darwin 渲染进 set-environment, 由 /etc/zshenv
+  # source 给所有 zsh —— 注意它**不**进 launchd (GUI app 的代理环境由
+  # modules/shell/env.nix 的 launchd.user.agents.proxy-env 每次登录 setenv)。
+  # 此处复用它生成 nu 语法,保证 zsh 与 nushell 永不漂移:
   # 任何变量改动(代理、LANG、PAGER…)rebuild 后两边自动同步。
   #
   # 处理:
@@ -35,7 +37,7 @@ let
   # nushell 作为登录 shell 时不读 /etc/zshenv、不执行 path_helper,
   # 启动时 $env.PATH 为 nothing → 所有 nix/brew 工具(fastfetch、herdr…)
   # 都找不到。此文件在每次 nushell 启动时自动加载,重建 PATH 与全部
-  # 环境变量(与 zsh / GUI 应用一致)。
+  # 环境变量(与 zsh 一致; GUI app 走 launchd agent, 见 shell/env.nix)。
   #
   # 注意 macOS 上 nushell 的默认配置目录是 ~/Library/Application Support/
   # nushell(而非 ~/.config/nushell)。

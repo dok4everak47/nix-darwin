@@ -16,11 +16,14 @@ in {
   # Assembled into /etc/zdotdir/.zshrc by shell/zdotdir.nix (ZDOTDIR 迁移,
   # 见该文件头注释)。
   dok4ever.shell.zshRc = ''
+    # 下面各函数的代理只导出 http(s): 不再夹带 all_proxy=socks5 —— git 会
+    # 优先用 socks5, 2026-09-06 记录过 github 443 SSL_ERROR_SYSCALL (见 lib.nix)。
+    # 地址/端口来自 modules/lib.nix 的 shared.proxyUrl (单一来源)。
     # dsh update
     dsh-update() {
       (
         cd ${home}/Project/deepseek-harness || exit 1
-        https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890 \
+        https_proxy=${shared.proxyUrl} http_proxy=${shared.proxyUrl} \
           git pull &&
         pnpm install &&
         pnpm run build &&
@@ -53,7 +56,7 @@ in {
         local branch="$branches[$sel]"
         git checkout "$branch" || exit 1
       fi
-      https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890 \
+      https_proxy=${shared.proxyUrl} http_proxy=${shared.proxyUrl} \
         git pull --rebase &&
       pnpm install &&
       pnpm run build
@@ -93,7 +96,7 @@ in {
         echo "→ Updating deepseek-harness (dsh web backend)..."
         (
           cd "$harness_dir" || exit 0
-          https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890 \
+          https_proxy=${shared.proxyUrl} http_proxy=${shared.proxyUrl} \
             git pull --rebase &&
           pnpm install &&
           pnpm run build &&
@@ -182,7 +185,7 @@ in {
     rime-redeploy() {
       (
         cd /etc/nix-darwin || exit 1
-        https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890 \
+        https_proxy=${shared.proxyUrl} http_proxy=${shared.proxyUrl} \
           sudo darwin-rebuild switch --flake .#dok4ever-mac && \
           rime-reload
       )

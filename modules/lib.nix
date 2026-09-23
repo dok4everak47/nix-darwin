@@ -9,25 +9,41 @@
   home = "/Users/${username}";
 
   # ── Proxy ───────────────────────────────────────────────────────────
-  # Single source of truth. nix.envVars (daemon) and environment.variables
-  # (shell/GUI) both reference these, so the two never drift apart.
+  # 单一事实来源 (2026-09-23 收拢)。改代理只动下面 4 个常量:
+  #   nix-daemon      → modules/system/nix.nix (nix.envVars)
+  #   所有 zsh/nushell → environment.variables → set-environment (modules/shell/{env,nushell}.nix)
+  #   GUI app         → launchd.user.agents.proxy-env (modules/shell/env.nix, 每次登录 setenv)
+  #   zsh 函数        → modules/shell/functions.nix (插值 shared.proxyUrl)
+  #
+  # 注意: templates/*/flake.nix 是独立 flake (被 `nix flake init` 原样复制, 不能
+  # import 本文件), 每个模板文件内自带一份同名常量; scripts/npm-proxy.py 也镜像
+  # 端口。改端口时这两处必须一起改。
+  proxyHost = "127.0.0.1";
+  proxyPort = 7890;
+  proxyUrl = "http://${proxyHost}:${toString proxyPort}";
+  proxySocksUrl = "socks5://${proxyHost}:${toString proxyPort}";
+
+  # 直连名单 (2026-09-23 与手写的 ~/Library/LaunchAgents/com.dok4ever.proxy-env.plist
+  # 对齐, 那份已冗余可删): feishu/larksuite = 飞书 CLI; volces/moonshot = ARK 与
+  # Kimi 的国内 API。shell 与 GUI 现在共用这一份, 不再出现 "终端走代理 / GUI 直连"。
+  proxyNoProxy = "localhost,127.0.0.1,::1,feishu.cn,.feishu.cn,larksuite.com,.larksuite.com,ark.cn-beijing.volces.com,.volces.com,.moonshot.cn";
+
   proxyEnv = {
-    http_proxy = "http://127.0.0.1:7890";
-    https_proxy = "http://127.0.0.1:7890";
-    HTTP_PROXY = "http://127.0.0.1:7890";
-    HTTPS_PROXY = "http://127.0.0.1:7890";
-    no_proxy = "localhost,127.0.0.1,::1,feishu.cn,.feishu.cn,larksuite.com,.larksuite.com";
-    NO_PROXY = "localhost,127.0.0.1,::1,feishu.cn,.feishu.cn,larksuite.com,.larksuite.com";
+    http_proxy = proxyUrl;
+    https_proxy = proxyUrl;
+    HTTP_PROXY = proxyUrl;
+    HTTPS_PROXY = proxyUrl;
+    no_proxy = proxyNoProxy;
+    NO_PROXY = proxyNoProxy;
   };
 
-  # SOCKS variants are only relevant for user shells / GUI apps, not the
-  # nix-daemon (which only needs HTTP(S)_PROXY).
-  # SOCKS variants: 2026-09-06 注释掉 — all_proxy=socks5 污染 GUI app (nvim) git,
-  # git 优先用 env all_proxy(socks5) → github 443 SSL_ERROR_SYSCALL (Lazy update 失败)。
-  # ClashBar TUN/系统代理模式下不需要 socks5 env。
+  # SOCKS 变体只对用户 shell / GUI app 有意义, nix-daemon 只需要 HTTP(S)_PROXY。
+  # 2026-09-06 注释掉 all_proxy=socks5 — git 会优先用 env all_proxy(socks5),
+  # 导致 GUI app (nvim) 里 git 拉 github 443 报 SSL_ERROR_SYSCALL (Lazy update 失败)。
+  # 2026-09-23 起 shell 函数与 devShell 模板也统一只导出 http(s), 不再夹带 socks5。
   shellProxyExtra = {
-    # all_proxy = "socks5://127.0.0.1:7890";
-    # ALL_PROXY = "socks5://127.0.0.1:7890";
+    # all_proxy = proxySocksUrl;
+    # ALL_PROXY = proxySocksUrl;
     LARK_CLI_NO_PROXY = "1";
   };
 

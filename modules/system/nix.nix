@@ -39,6 +39,8 @@ in {
   # nix-daemon 是 root 常驻进程，从 launchd 启动时不继承 shell 代理变量，
   # 直连 cache.nixos.org 被墙。nix.envVars 是官方设计给 daemon 注入环境
   # 的入口：会写入 launchd daemon plist 的 EnvironmentVariables + 系统变量。
+  # 注意: daemon 是 KeepAlive 常驻进程, 改这里(或代理挂掉)后它**不会**自动
+  # 重读环境 —— 需要 sudo launchctl kickstart -k system/org.nixos.nix-daemon。
   nix.envVars = shared.proxyEnv;
 
   # ── Auto GC: keep /nix/store bounded (encrypted APFS volume is small) ──

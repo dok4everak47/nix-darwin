@@ -30,7 +30,7 @@
 flake.nix            # 入口：inputs (nixpkgs 26.05 / nix-darwin / unstable pin / nixos-unstable / areofyl-fetch / llm-agents) + specialArgs + templates
 flake.lock           # 锁文件
 modules/
-  lib.nix            # 共享常量：username / home / proxyEnv / pathInit（PATH 单一来源）
+  lib.nix            # 共享常量：username / home / proxyHost·proxyPort·proxyUrl·proxyNoProxy·proxyEnv / pathInit（PATH 单一来源）
   default.nix        # import 汇总（overlays → system → shell → programs → fixes）
   overlays/          # 包级 override（openmp 空 patch 过滤 / opencode codesign 修复 / atuin pin）
   system/            # nix.nix (daemon/GC/proxy) / homebrew.nix / packages.nix / activation.nix
@@ -47,15 +47,22 @@ scripts/             # npm-proxy-build.sh 等（llm-agents 构建期依赖）
 2. **验证（build 测试）**：`cd /etc/nix-darwin && nix flake check --no-build` 必须全绿；**每次改完代码后必须先 build 测试过一遍**（`nix build --no-link --print-out-paths '.#darwinConfigurations.dok4ever-mac.system'` 或 `nix flake check`），**如果有报错让 AI 自己改**，改到全绿才能交差，不许把报错留给用户。
 3. **rebuild**：用户自己跑 `sudo darwin-rebuild switch --flake .#dok4ever-mac`（agent 无 sudo，不要尝试）。
 4. **提交**：`git add -A && git commit`，推送到 `gitea`（SSH, `ssh://git@gitea.luongchin.com:2222/dok4ever/nix-darwin.git`）和 `origin`（GitHub HTTPS, `github.com/dok4everak47/nix-darwin`）。
-   - push 需要代理 `127.0.0.1:7890` 在跑（ClashBar）。失败先 `lsof -iTCP:7890` 确认代理，再让用户重启 ClashBar。
+   - push 需要代理 `127.0.0.1:7890` 在跑（NinjaDesktop / mihomo 内核）。失败先 `ninja-proxy now` 或 `lsof -nP -iTCP:7890 -sTCP:LISTEN` 确认代理，再让用户启动 NinjaDesktop。
    - **本机是 SSH 到 gitea，如果 gitea 连接被劫持/超时，检查 `~/.ssh/config` 的 ProxyCommand。**
 
 ## 已知坑
 
-### 代理 (proxy)
-- 所有构建/更新走 `http://127.0.0.1:7890`（ClashBar）。`modules/lib.nix` 的 `proxyEnv` 是单一来源，daemon (`nix.envVars`) 和 shell/GUI (`environment.variables`) 都引用它。
-- `no_proxy` 含 `feishu.cn / larksuite.com`（飞书 CLI 不走代理）。
-- ClashBar 会随机退出 → nix 构建/git push 报网络错时先查代理是否活着。
+### 代理 (proxy) —— 2026-09-23 重整
+- 客户端是 **NinjaDesktop**（mihomo 内核：`/Library/LaunchDaemons/com.dok4ever.mihomo-kernel.plist` 开机常驻，配置 `~/.config/mihomo/config.yaml`，`mixed-port: 7890`，控制口 `127.0.0.1:9799`）。ClashBar 是旧客户端。
+- **单一来源 = `modules/lib.nix` 的 `proxyHost` / `proxyPort` / `proxyUrl` / `proxyNoProxy`**（`proxyEnv` 由它们拼出）。改代理只动这几个常量。
+- 三条下发路径，别人容易搞混：
+  - `nix.envVars = proxyEnv` → nix-daemon（写进 root launchd plist）。**daemon 常驻不重读环境**，改完要 `sudo launchctl kickstart -k system/org.nixos.nix-daemon`。
+  - `environment.variables` → 渲染进 set-environment，由 `/etc/zshenv` source → 所有 zsh + nushell。**它不进 launchd**（别以为 GUI app 拿得到）。
+  - `launchd.user.agents.proxy-env`（`modules/shell/env.nix`）→ 每次登录 `launchctl setenv` 进用户 domain，GUI app 靠它。历史遗留的 `~/Library/LaunchAgents/com.dok4ever.proxy-env.plist` + `~/.hermes/bin/set-proxy-env.sh` 已被取代，冗余可删。
+- `proxyNoProxy` 含 `feishu.cn / larksuite.com`（飞书 CLI）与 `volces.com / moonshot.cn`（ARK / Kimi API）—— shell 与 GUI 共用同一份，不再分裂。
+- **不导出 `all_proxy`(socks5)**：git 会优先用它 → github 443 `SSL_ERROR_SYSCALL`（2026-09-06）。shell 函数与模板 2026-09-23 起也统一只导出 http(s)。
+- `templates/*/flake.nix` 是独立 flake（`nix flake init` 原样复制，import 不到 `lib.nix`），各自文件内自带一份 `proxyHost·proxyPort·proxyUrl·proxyNoProxy`；`scripts/npm-proxy.py` 也镜像端口 → **改端口时这几处一起改**。
+- 代理挂掉时构建/push 报 `connection refused`（无回退）；先确认 7890 有监听再排查别的。
 - npm registry override（llm-agents 的 qwen-code 等）依赖 `scripts/npm-proxy-build.sh` 启动的本地 HTTPS 反向代理 (127.0.0.1:443)。**构建期必须代理在跑**。
 
 ### nix-darwin 26.05 上游 bug

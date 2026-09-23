@@ -49,7 +49,7 @@
     base64Media = false
     enableRSS = true
     enableDebug = false
-    proxy = "http://127.0.0.1:7890"
+    proxy = "${shared.proxyUrl}"
     proxyAuth = ""
     maxConcurrentReqs = 2
     maxRetries = 3
