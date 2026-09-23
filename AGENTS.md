@@ -58,7 +58,7 @@ scripts/             # npm-proxy-build.sh 等（llm-agents 构建期依赖）
 - 三条下发路径，别人容易搞混：
   - `nix.envVars = proxyEnv` → nix-daemon（写进 root launchd plist）。**daemon 常驻不重读环境**，改完要 `sudo launchctl kickstart -k system/org.nixos.nix-daemon`。
   - `environment.variables` → 渲染进 set-environment，由 `/etc/zshenv` source → 所有 zsh + nushell。**它不进 launchd**（别以为 GUI app 拿得到）。
-  - `launchd.user.agents.proxy-env`（`modules/shell/env.nix`）→ 每次登录 `launchctl setenv` 进用户 domain，GUI app 靠它。历史遗留的 `~/Library/LaunchAgents/com.dok4ever.proxy-env.plist` + `~/.hermes/bin/set-proxy-env.sh` 已被取代，冗余可删。
+  - `launchd.user.agents.proxy-env`（`modules/shell/env.nix`）→ 每次登录 `launchctl setenv` 进用户 domain，GUI app 靠它。历史遗留的 `~/Library/LaunchAgents/com.dok4ever.proxy-env.plist` + `~/.hermes/bin/set-proxy-env.sh` 已被取代，**2026-09-23 删除**（备份在 `~/.Trash/proxy-env-cleanup-20260923/`）。
 - `proxyNoProxy` 含 `feishu.cn / larksuite.com`（飞书 CLI）与 `volces.com / moonshot.cn`（ARK / Kimi API）—— shell 与 GUI 共用同一份，不再分裂。
 - **不导出 `all_proxy`(socks5)**：git 会优先用它 → github 443 `SSL_ERROR_SYSCALL`（2026-09-06）。shell 函数与模板 2026-09-23 起也统一只导出 http(s)。
 - `templates/*/flake.nix` 是独立 flake（`nix flake init` 原样复制，import 不到 `lib.nix`），各自文件内自带一份 `proxyHost·proxyPort·proxyUrl·proxyNoProxy`；`scripts/npm-proxy.py` 也镜像端口 → **改端口时这几处一起改**。
@@ -68,6 +68,11 @@ scripts/             # npm-proxy-build.sh 等（llm-agents 构建期依赖）
 ### nix-darwin 26.05 上游 bug
 - `ssh_config.d/100-nix-darwin.conf` 被错误写到 PAM sudo_local 内容位置（`modules/fixes/ssh-config.nix` 有 mkForce 占位修复）。不要删这个修复。
 - openmp 空 patch (`run-lit-directly.patch` 是空文件) 导致 patch(1) 报 "Only garbage was found" → 连锁炸掉 openmp→fftw→vid.stab→ffmpeg→imagemagick 依赖链。`modules/overlays/default.nix` 过滤空 patch。不要删。
+
+### 项目 flake（~/Project/*）
+- 各项目 `flake.nix` 的 shellHook 里有一份**复制品** `proxyHost/proxyPort/proxyUrl/proxyNoProxy`（项目 flake import 不到 `lib.nix`）。2026-09-23 已把 hexshell / mdcat / Text Editor 从旧的「短 no_proxy + `all_proxy=socks5`」迁到与全局一致的写法。
+- **项目 flake 的 `flake.nix` 必须被 git 跟踪**，否则 nix 直接拒绝求值（`Path 'flake.nix' ... is not tracked by Git`），direnv 会**静默地一直用旧缓存环境** —— 肉眼看起来「改了没生效」。修法：`git -C <dir> add -N flake.nix`（Text Editor 2026-09-23 踩过）。
+- devShell 里导出代理的那段靠 `/dev/tcp` 探测端口，**只有 bash 支持**；direnv 与 `nix develop` 都用 bash 执行 shellHook，所以能用，但别把这段挪进 `.zshrc`。
 
 ### GC / 存储
 - 自动 GC：周日 03:00 `--delete-older-than 30d`（`modules/system/nix.nix`）。
