@@ -19,6 +19,34 @@ in {
     # 下面各函数的代理只导出 http(s): 不再夹带 all_proxy=socks5 —— git 会
     # 优先用 socks5, 2026-09-06 记录过 github 443 SSL_ERROR_SYSCALL (见 lib.nix)。
     # 地址/端口来自 modules/lib.nix 的 shared.proxyUrl (单一来源)。
+    # ── 第三方安装器助手: sh-install ────────────────────────────────────
+    # 背景: 大多数 `curl … | bash` 安装器按 $ZDOTDIR/.zshrc 定位配置文件追加
+    # PATH, 而本机 ZDOTDIR=/etc/zdotdir 指向 nix store 只读目录 → 追加必失败
+    # (bash: /etc/zdotdir/.zshrc: Permission denied, 2026-09-24 kigi 实测)。
+    # 本函数把 ZDOTDIR 改成 $HOME 后再跑脚本: 安装器转而写 ~/.zshrc —— 可写、
+    # rebuild 不覆盖, 且被 /etc/zdotdir/.zshrc 末行 source → PATH 立即生效。
+    # ⚠️ 只覆盖 zsh: nushell 的 env.nu 是硬编码 PATH 列表、不继承父 shell 环境,
+    # nu 里也要用的工具仍需加进 modules/lib.nix 的 pathInitNu。
+    # 用法: sh-install <安装脚本 URL> [传给脚本的参数…]
+    sh-install() {
+      if [ $# -lt 1 ]; then
+        print -u2 'usage: sh-install <install-script-url> [args…]'
+        return 2
+      fi
+      local url=$1
+      shift
+      local tmp && tmp=$(mktemp -t sh-install) || return 1
+      if ! curl -fsSL "$url" -o "$tmp"; then
+        print -u2 "sh-install: 下载失败: $url"
+        rm -f "$tmp"
+        return 1
+      fi
+      ZDOTDIR="$HOME" bash "$tmp" "$@"
+      local rc=$?
+      rm -f "$tmp"
+      return $rc
+    }
+
     # dsh update
     dsh-update() {
       (
