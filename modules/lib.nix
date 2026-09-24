@@ -54,7 +54,8 @@
   #   1. user nix profile (devShell 装的工具, e.g. rust-analyzer) — devShell 优先
   #      (imagemagick-full keg removed 2026-09-03, now nixpkgs system profile).
   #   2. Nix system profile — migrated CLI tools — beats /opt/homebrew/bin.
-  #   3. TeX, user bins, then /opt/homebrew/bin as a fallback.
+  #   3. TeX, user bins (含 ~/.kigi/bin: kigi 自带安装器写不了只读 ZDOTDIR,
+  #      见下方 pathInit 内注释), then /opt/homebrew/bin as a fallback.
   #   4. macOS system paths are preserved via $path (never wholesale-replace).
   pathInit = ''
     typeset -U path
@@ -68,6 +69,11 @@
       /usr/local/texlive/2026basic/bin/universal-darwin
       $HOME/.local/bin
       $HOME/bin
+      # kigi CLI: 自带安装器往 ZDOTDIR 下的 .zshrc 追加 PATH (它读 ZDOTDIR),
+      # ZDOTDIR=/etc/zdotdir 是 nix store 只读目录 -> Permission denied。
+      # 二进制固定在 ~/.kigi/bin/kigi(指向 ~/.kigi/downloads/<version>,
+      # 升级时只改这个 symlink), PATH 由这里统一提供。
+      $HOME/.kigi/bin
       /opt/homebrew/bin
       /opt/homebrew/sbin
       /usr/local/bin
@@ -90,6 +96,7 @@
       "/usr/local/texlive/2026basic/bin/universal-darwin"
       ($env.HOME | path join ".local/bin")
       ($env.HOME | path join "bin")
+      ($env.HOME | path join ".kigi/bin")   # 与 pathInit 同序 (kigi CLI)
       "/opt/homebrew/bin"
       "/opt/homebrew/sbin"
       "/usr/local/bin"
