@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }: let
@@ -12,8 +13,9 @@ in {
   # 2026-08-24: SJTU mirror 频繁超时/挂起, darwin-rebuild 卡死在
   # "querying ... on mirror.sjtu.edu.cn"; 换回官方单源。如需镜像,
   # 放官方之后做 fallback, 不要放第一位。
-  # substituters / trusted-public-keys / trusted-users 由 nix-darwin 默认提供,
-  # 这里只补充 flake 特有的项避免 mkMerge 重复。
+  # substituters / trusted-public-keys / trusted-users 由 nix-darwin 默认提供;
+  # ⚠️ 普通赋值会与默认值 mkMerge 叠加 → 重复项, 所以下面两个列表用 mkForce
+  # 整体覆盖 (原因见 numtide 那段)。
   # 默认: substituters = mkAfter [ "https://cache.nixos.org/" ]
   #       trusted-public-keys = [ "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=" ]
   #       trusted-users = [ "root" ]
@@ -26,11 +28,17 @@ in {
   # cache.numtide.com hosts the go-modules FOD + prebuilt crush/claude-code
   # binaries; without it, Go source packages (crush) rebuild from proxy.golang.org
   # which is GFW-blocked (EOF). cache.nixos.org stays first (official mirror).
-  nix.settings.substituters = [
+  #
+  # 2026-09-26: 这里必须 mkForce。nix-darwin 26.05 的默认值会把本文件的列表
+  # 追加在它自己的默认项之后, 生成两份 cache.nixos.org (实测 /etc/nix/nix.conf
+  # 的 substituters 与 trusted-public-keys 各重复一次); mkAfter 还会把 numtide
+  # 挤到第一位, 与上面「官方镜像优先」的意图相反。mkForce 丢弃默认值,
+  # 顺序完全由本文件决定。
+  nix.settings.substituters = lib.mkForce [
     "https://cache.nixos.org/"
     "https://cache.numtide.com"
   ];
-  nix.settings.trusted-public-keys = [
+  nix.settings.trusted-public-keys = lib.mkForce [
     "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
     "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
   ];
