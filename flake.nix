@@ -15,8 +15,8 @@
 
     # Rolling nixos-unstable channel (locked in flake.lock, reproducible).
     # Serves the codex + nitter overlays. herdr rode this input too, but is
-    # now pinned to a prebuilt 0.9.0 binary in modules/overlays/default.nix
-    # (nixpkgs still ships 0.8.2 as of 2026-09-08); drop that override once
+    # now pinned to a prebuilt 0.9.1 binary in modules/overlays/default.nix
+    # (nixpkgs still ships 0.8.2 as of 2026-09-29); drop that override once
     # nixpkgs catches up. Separate input so atuin's pinned rev stays untouched.
     nixos-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 

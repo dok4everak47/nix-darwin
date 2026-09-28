@@ -72,47 +72,68 @@
       pi-coding-agent = unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.pi-coding-agent;
     })
 
-    # ── herdr: prebuilt 0.9.0 release binary (2026-09-09) ──────────────
+    # ── herdr: prebuilt 0.9.1 release binary (2026-09-29) ──────────────
     # nixpkgs (26.05 stable, atuin-pinned `unstable`, and rolling
-    # nixos-unstable as of rev d6524aa/2026-09-08) all still ship herdr 0.8.2;
-    # upstream 0.9.0 (2026-09-07) adds multi-machine SSH management
-    # (`herdr machine`), independent client views, Muse agent detection.
+    # nixos-unstable) all still ship herdr 0.8.2; upstream 0.9.1 adds
+    # multi-machine SSH control (`herdr --machine`), independent client views,
+    # Letta/Muse agent detection, and cursor editing in herdr inputs.
     # Fetch the official prebuilt release binary (aarch64-darwin only) instead
-    # of the nixpkgs source build. Hash = sha256 of the v0.9.0 release asset,
-    # verified 2026-09-09. Once nixpkgs catches up, drop this override and
+    # of the nixpkgs source build. Hash = sha256 of the v0.9.1 release asset,
+    # verified 2026-09-29. Once nixpkgs catches up, drop this override and
     # restore `nixos-unstable.legacyPackages...herdr`.
+    #
+    # ── 为什么要包一层 wrapper: unset __CFBundleIdentifier ──────────────
+    # 从 Ghostty pane 启动的子进程会继承 `__CFBundleIdentifier=
+    # com.mitchellh.ghostty` (macOS 用该变量覆盖 AppKit 的 bundle 身份)。
+    # herdr 内嵌 libghostty 且会注册 NSApplication, 于是它顶着 Ghostty 的
+    # 名字去 LaunchServices 登记 → Dock 多出一个"幽灵" Ghostty 图标; 客户端
+    # 若被强杀该登记不回收, 图标会累积 (2026-09-29 实测: lsappinfo 名为
+    # Ghostty 的条目, executable path 却是 .../sw/bin/herdr)。
+    # wrapper 在 exec 真二进制前清掉这个继承变量, herdr 不再冒充 Ghostty。
     (final: prev: {
-      herdr = prev.stdenvNoCC.mkDerivation (finalAttrs: {
-        pname = "herdr";
-        version = "0.9.0";
+      herdr = let
+        unwrapped = prev.stdenvNoCC.mkDerivation (finalAttrs: {
+          pname = "herdr";
+          version = "0.9.1";
 
-        src = prev.fetchurl {
-          url = "https://github.com/herdrdev/herdr/releases/download/v${finalAttrs.version}/herdr-macos-aarch64";
-          hash = "sha256-MrU98JhyYoBZx4mmnwKmuOKeFN3yZxFCHzRj9wwa7xc=";
+          src = prev.fetchurl {
+            url = "https://github.com/herdrdev/herdr/releases/download/v${finalAttrs.version}/herdr-macos-aarch64";
+            hash = "sha256-X8en5636ylb6gKqJ3LAlaTNXJo2rgoW5zi0IojE8id4=";
+          };
+
+          dontUnpack = true;
+          strictDeps = true;
+
+          installPhase = ''
+            runHook preInstall
+            install -Dm755 $src $out/bin/herdr
+            runHook postInstall
+          '';
+
+          # macOS 27: adhoc re-sign after nix fixup (same pattern as opencode
+          # overlay — a broken/absent signature gets the binary SIGKILL'd).
+          postFixup = ''
+            /usr/bin/codesign --force --sign - $out/bin/herdr
+          '';
+
+          meta = {
+            description = "Agent-aware terminal workspace manager for AI coding agents";
+            homepage = "https://herdr.dev";
+            license = prev.lib.licenses.mit;
+            mainProgram = "herdr";
+          };
+        });
+      in
+        prev.symlinkJoin {
+          name = "herdr-${unwrapped.version}";
+          paths = [unwrapped];
+          nativeBuildInputs = [prev.makeWrapper];
+          # 清掉继承的终端身份; 其余环境变量(TERM/TERM_PROGRAM/PATH…)原样透传。
+          postBuild = ''
+            wrapProgram $out/bin/herdr --unset __CFBundleIdentifier
+          '';
+          meta = unwrapped.meta;
         };
-
-        dontUnpack = true;
-        strictDeps = true;
-
-        installPhase = ''
-          runHook preInstall
-          install -Dm755 $src $out/bin/herdr
-          runHook postInstall
-        '';
-
-        # macOS 27: adhoc re-sign after nix fixup (same pattern as opencode
-        # overlay — a broken/absent signature gets the binary SIGKILL'd).
-        postFixup = ''
-          /usr/bin/codesign --force --sign - $out/bin/herdr
-        '';
-
-        meta = {
-          description = "Agent-aware terminal workspace manager for AI coding agents";
-          homepage = "https://herdr.dev";
-          license = prev.lib.licenses.mit;
-          mainProgram = "herdr";
-        };
-      });
     })
 
     # codex : use unstable version
@@ -128,6 +149,11 @@
     # nixos-unstable channel for the newest build.
     (final: prev: {
       nitter = nixos-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.nitter;
+    })
+
+    # Opencode: Unstable version
+    (final: prev: {
+      opencode = nixos-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.opencode;
     })
   ];
 }
