@@ -71,8 +71,8 @@
       chezmoi # dotfile manager (declarative ~/ config); dotfiles repo TBD
       age # chezmoi 敏感文件加密 (dotfiles repo 用)
       nushell
-      git-lfs
       zellij
+      opencode
 
       # ── Migrated from Homebrew ────────────────────────────────────────
       antidote # zsh plugin manager (replaces /opt/homebrew/opt/antidote)

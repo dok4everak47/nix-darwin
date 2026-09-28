@@ -49,6 +49,7 @@ in {
     ];
 
     brews = [
+      "mole"
       # Python console lorem ipsum generator (per9000/lorem) — nixpkgs
       # "lorem" is an unrelated GNOME app, so this one lives on Homebrew.
       {name = "lorem";}
@@ -60,8 +61,8 @@ in {
       "font-symbols-only-nerd-font"
       "forel"
       "whatcable"
-      "tinycast"
-      "netfluss"
+      # "tinycast"
+      # "netfluss"
       # NOTE: emacs-app intentionally absent — Nix Emacs
       # (/Applications/Nix Apps/Emacs.app) is the canonical install.
     ];
