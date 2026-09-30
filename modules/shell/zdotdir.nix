@@ -78,6 +78,21 @@ in {
       # (enableCompletion 尾块在 /etc/zshrc; 被盖后由此补)
       (( ''${+functions[bashcompinit]} )) || { autoload -U bashcompinit; bashcompinit; }
 
+      # ══ Ghostty shell integration ══
+      # 故障: cmd+T / cmd+N 新开 tab/window 不继承当前路径 (落 $HOME)。
+      # 根因: 登录 shell 是 swsh 调度器, Ghostty 的 shell-integration=detect
+      # 按 argv[0] basename 匹配 bash/zsh/nu (src/termio/shell_integration.zig),
+      # 认不出就不注入集成脚本 → 终端永远收不到 OSC 7 的 pwd 上报 →
+      # tab/window-inherit-working-directory (默认 true) 无 pwd 可继承。
+      # 也不能改成 shell-integration=zsh 强制注入: Ghostty 靠劫持 ZDOTDIR 注入,
+      # 而 /etc/zshenv 无条件 export ZDOTDIR=/etc/zdotdir 会把它顶掉, 照样失效。
+      # 故按 Ghostty 官方 manual install 在此显式 source。脚本自带幂等 guard
+      # (($+_ghostty_state)) , 官方原生注入的 shell 再 source 也不会重复初始化。
+      # 只在 Ghostty 里生效 (kaku/tmux/VS Code 终端等不带 GHOSTTY_RESOURCES_DIR)。
+      if [[ -n ''${GHOSTTY_RESOURCES_DIR-} ]]; then
+        source "$GHOSTTY_RESOURCES_DIR"/shell-integration/zsh/ghostty-integration
+      fi
+
       # ══ 用户 rc ══
       # ZDOTDIR 生效后 zsh 不再自动读 ~/.zshrc (kaku.zsh 集成在其末尾),
       # 保持原顺序在这里接上 —— 必须是本文件最后一步。
