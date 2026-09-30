@@ -25,5 +25,9 @@ let
   };
 in
 {
-  fonts.packages = [ dotgothic16 ];
+  # Terminus TTF: 终端点阵字 (dashboard 导航按钮/分区标题用, 见 ide.el 的 my-dash-nav-font)
+  fonts.packages = [
+    dotgothic16
+    pkgs.terminus_font_ttf
+  ];
 }
