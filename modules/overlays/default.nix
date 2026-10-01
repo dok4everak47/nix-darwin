@@ -67,19 +67,77 @@
       });
     })
 
-    # ── pi-coding-agent: use unstable version instead of 26.05 stable ───
+    # ── pi-coding-agent: prebuilt 0.99.2 release binary (2026-10-01) ─────
+    # 26.05 stable, the atuin-pinned `unstable` input (rev 6f6fca05, 2026-08)
+    # and even nixos-unstable's branch still ship pi 0.82.1 / 0.87.1, so the
+    # old `unstable.legacyPackages...pi-coding-agent` override is gone. Fetch
+    # the official standalone release tarball (aarch64-darwin) instead. Hash =
+    # sha256 of pi-darwin-arm64.tar.gz, verified 2026-10-01 against the
+    # release's SHA256SUMS
+    # (564707a7378dae4cce29d92693b45b49d3a3a25187dddcc6d8c2e4aca4fb3719).
+    #
+    # 布局: tarball 根是 `pi/`, 里面不只是 `pi` 二进制, 还有 package.json、
+    # photon_rs_bg.wasm 和 native/darwin/prebuilds/.../darwin-platform.node,
+    # 二进制运行时会按自身路径找这些兄弟文件 → 整棵树原样留在 libexec/pi/,
+    # 只在 bin/ 暴露一个 wrapper(路径不变, execPath 仍在 libexec/pi/)。
+    # wrapper 与 nixpkgs 那版对齐: PATH 补 ripgrep/fd, 关掉自更新检查与遥测。
     (final: prev: {
-      pi-coding-agent = unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.pi-coding-agent;
+      pi-coding-agent = prev.stdenvNoCC.mkDerivation (finalAttrs: {
+        pname = "pi-coding-agent";
+        version = "0.99.2";
+
+        src = prev.fetchurl {
+          url = "https://github.com/earendil-works/pi/releases/download/v${finalAttrs.version}/pi-darwin-arm64.tar.gz";
+          hash = "sha256-VkcHpzeNrkzOKdkmk7RbSdOjolGH3dzG2MLkrKT7Nxk=";
+        };
+
+        dontUnpack = true;
+        nativeBuildInputs = [prev.makeWrapper];
+
+        installPhase = ''
+          runHook preInstall
+          mkdir -p $out/libexec $out/bin
+          tar -xzf $src -C $out/libexec
+          chmod 0755 $out/libexec/pi/pi
+          runHook postInstall
+        '';
+
+        # macOS 27: adhoc re-sign after nix fixup (same pattern as the herdr
+        # and opencode overlays — a broken/absent signature is SIGKILL'd).
+        # The native prebuild (.node) is dlopen'd at runtime and needs its own
+        # signature; makeWrapper last so the wrapper stays a plain script.
+        postFixup = ''
+          /usr/bin/codesign --force --sign - $out/libexec/pi/pi
+          find $out/libexec/pi -name '*.node' -type f \
+            -exec /usr/bin/codesign --force --sign - {} \;
+          makeWrapper $out/libexec/pi/pi $out/bin/pi \
+            --prefix PATH : ${prev.lib.makeBinPath [prev.ripgrep prev.fd]} \
+            --set-default PI_SKIP_VERSION_CHECK 1 \
+            --set-default PI_TELEMETRY 0
+        '';
+
+        meta = {
+          description = "Coding agent CLI with read, bash, edit, write tools and session management";
+          homepage = "https://pi.dev/";
+          changelog = "https://github.com/earendil-works/pi/blob/v${finalAttrs.version}/packages/coding-agent/CHANGELOG.md";
+          license = prev.lib.licenses.mit;
+          mainProgram = "pi";
+        };
+      });
     })
 
-    # ── herdr: prebuilt 0.9.1 release binary (2026-09-29) ──────────────
+    # ── herdr: prebuilt 0.9.3 release binary (2026-10-01) ──────────────
     # nixpkgs (26.05 stable, atuin-pinned `unstable`, and rolling
-    # nixos-unstable) all still ship herdr 0.8.2; upstream 0.9.1 adds
-    # multi-machine SSH control (`herdr --machine`), independent client views,
-    # Letta/Muse agent detection, and cursor editing in herdr inputs.
+    # nixos-unstable) all still ship herdr 0.8.2; upstream is now 0.9.3.
+    # 0.9.2 adds multiple prefix keys, `herdr machine status`/`reconnect` and
+    # an interactive `machine add`, faster image rendering (the Herdr-specific
+    # pane graphics API is gone — apps write standard Kitty graphics now), a
+    # resumed-agent startup delay, and agent self-reported resume commands;
+    # 0.9.3 is a hotfix restoring Escape-prefixed terminal shortcuts
+    # (Option+Left/Right, Option+Backspace in Ghostty/iTerm2, Shift+Enter).
     # Fetch the official prebuilt release binary (aarch64-darwin only) instead
-    # of the nixpkgs source build. Hash = sha256 of the v0.9.1 release asset,
-    # verified 2026-09-29. Once nixpkgs catches up, drop this override and
+    # of the nixpkgs source build. Hash = sha256 of the v0.9.3 release asset,
+    # verified 2026-10-01. Once nixpkgs catches up, drop this override and
     # restore `nixos-unstable.legacyPackages...herdr`.
     #
     # ── 为什么要包一层 wrapper: unset __CFBundleIdentifier ──────────────
@@ -94,11 +152,11 @@
       herdr = let
         unwrapped = prev.stdenvNoCC.mkDerivation (finalAttrs: {
           pname = "herdr";
-          version = "0.9.1";
+          version = "0.9.3";
 
           src = prev.fetchurl {
             url = "https://github.com/herdrdev/herdr/releases/download/v${finalAttrs.version}/herdr-macos-aarch64";
-            hash = "sha256-X8en5636ylb6gKqJ3LAlaTNXJo2rgoW5zi0IojE8id4=";
+            hash = "sha256-UXOj4K5C1dGrfr+l1eYyn3w9I/jho2d8fOMjHaKIQVc=";
           };
 
           dontUnpack = true;
