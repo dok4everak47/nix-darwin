@@ -73,6 +73,7 @@
       nushell
       zellij
       opencode
+      tree
 
       # ── Migrated from Homebrew ────────────────────────────────────────
       antidote # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
