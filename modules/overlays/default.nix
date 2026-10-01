@@ -140,14 +140,21 @@
     # verified 2026-10-01. Once nixpkgs catches up, drop this override and
     # restore `nixos-unstable.legacyPackages...herdr`.
     #
-    # ── 为什么要包一层 wrapper: unset __CFBundleIdentifier ──────────────
-    # 从 Ghostty pane 启动的子进程会继承 `__CFBundleIdentifier=
-    # com.mitchellh.ghostty` (macOS 用该变量覆盖 AppKit 的 bundle 身份)。
-    # herdr 内嵌 libghostty 且会注册 NSApplication, 于是它顶着 Ghostty 的
-    # 名字去 LaunchServices 登记 → Dock 多出一个"幽灵" Ghostty 图标; 客户端
-    # 若被强杀该登记不回收, 图标会累积 (2026-09-29 实测: lsappinfo 名为
-    # Ghostty 的条目, executable path 却是 .../sw/bin/herdr)。
-    # wrapper 在 exec 真二进制前清掉这个继承变量, herdr 不再冒充 Ghostty。
+    # ── 为什么包成隐藏的 .app (LSUIElement): 防"幽灵" Dock 图标 ──────────
+    # herdr 内嵌 libghostty 且会注册 NSApplication, 于是它会被 LaunchServices
+    # 登记成一个 app。它从终端 pane 里启动时, macOS 把该进程归属到"责任进程"
+    # (= 宿主终端本体 Ghostty/Kaku), 登记出来就是终端本体的 bundle 身份 →
+    # Dock 多画一个 Ghostty/Kaku 的"幽灵"图标 (2026-09-29 实测: lsappinfo 里
+    # 名为 Ghostty、executable path 却是 .../sw/bin/herdr 的条目); 客户端退出
+    # 后该登记不回收, 图标于是累积 (2026-10-01: Dock 里曾同时 3 个 Ghostty)。
+    # 注意: 身份来自父进程归属, **不是**继承的 __CFBundleIdentifier —— 实测把
+    # 该变量删掉后再从 Kaku pane 启动裸二进制, 依然被登记成 Kaku, 所以单靠
+    # --unset 拦不住(旧注释的假设是错的)。
+    # 对策: 真二进制放进一个最小 .app 并标 LSUIElement=true。实测同样从 Kaku
+    # pane 启动, LS 会按这个 bundle 登记 (type=UIElement) → Dock 不加图标, 不再
+    # 冒充终端。副作用: store 路径只读, `herdr update` 无法自更新, 版本一律走
+    # nix —— 不要跑 herdr update。.app 放 libexec 而非 $out/Applications, 免得
+    # nix-darwin 把它当 GUI app 链进 /Applications/Nix Apps。
     (final: prev: {
       herdr = let
         unwrapped = prev.stdenvNoCC.mkDerivation (finalAttrs: {
@@ -182,14 +189,56 @@
           };
         });
       in
-        prev.symlinkJoin {
-          name = "herdr-${unwrapped.version}";
-          paths = [unwrapped];
-          nativeBuildInputs = [prev.makeWrapper];
-          # 清掉继承的终端身份; 其余环境变量(TERM/TERM_PROGRAM/PATH…)原样透传。
-          postBuild = ''
-            wrapProgram $out/bin/herdr --unset __CFBundleIdentifier
+        prev.stdenvNoCC.mkDerivation {
+          pname = "herdr";
+          version = unwrapped.version;
+
+          dontUnpack = true;
+          strictDeps = true;
+
+          installPhase = ''
+            runHook preInstall
+            appdir=$out/libexec/Herdr.app
+            mkdir -p $appdir/Contents/MacOS $out/bin
+            install -m755 ${unwrapped}/bin/herdr $appdir/Contents/MacOS/herdr
+
+            # 最小 Info.plist: 自己的 bundle id + LSUIElement(不进 Dock/Launchpad)
+            cat > $appdir/Contents/Info.plist <<'PLIST'
+            <plist version="1.0">
+            <dict>
+              <key>CFBundleExecutable</key><string>herdr</string>
+              <key>CFBundleIdentifier</key><string>dev.herdr.cli</string>
+              <key>CFBundleName</key><string>herdr</string>
+              <key>CFBundleDisplayName</key><string>herdr</string>
+              <key>CFBundlePackageType</key><string>APPL</string>
+              <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+              <key>CFBundleShortVersionString</key><string>${unwrapped.version}</string>
+              <key>CFBundleVersion</key><string>${unwrapped.version}</string>
+              <key>LSMinimumSystemVersion</key><string>11.0</string>
+              <key>NSHighResolutionCapable</key><true/>
+              <key>LSUIElement</key><true/>
+            </dict>
+            </plist>
+            PLIST
+
+            # PATH 上的 herdr 只是入口(其余环境变量 TERM/PATH… 原样透传); 真二进制
+            # 在 .app 里, 于是 LaunchServices 按这个 bundle 登记, 而不是按宿主终端。
+            cat > $out/bin/herdr <<SH
+            #!/bin/sh
+            unset __CFBundleIdentifier
+            exec "$out/libexec/Herdr.app/Contents/MacOS/herdr" "\$@"
+            SH
+            chmod +x $out/bin/herdr
+            runHook postInstall
           '';
+
+          # macOS 27: adhoc re-sign after nix fixup (same pattern as opencode
+          # overlay — a broken/absent signature gets the binary SIGKILL'd).
+          postFixup = ''
+            /usr/bin/codesign --force --sign - $out/libexec/Herdr.app/Contents/MacOS/herdr
+            /usr/bin/codesign --force --sign - $out/libexec/Herdr.app
+          '';
+
           meta = unwrapped.meta;
         };
     })
