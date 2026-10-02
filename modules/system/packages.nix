@@ -74,6 +74,9 @@
       zellij
       opencode
       tree
+      qemu # 通用机器模拟器/虚拟化 (qemu-system-*/qemu-img) 2026-10-02 per user request;
+      #      darwin 构建 = --enable-cocoa + --enable-hvf (Apple Hypervisor)，全 softmmu 目标，
+      #      无 linux-user (qemu-x86_64 那套 platforms 仅 linux/freebsd/o*b); nixpkgs 非 brew (铁律 4)
 
       # ── Migrated from Homebrew ────────────────────────────────────────
       antidote # zsh plugin manager (replaces /opt/homebrew/opt/antidote)
