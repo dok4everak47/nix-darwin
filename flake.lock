@@ -174,7 +174,8 @@
         "nix-darwin": "nix-darwin",
         "nixos-unstable": "nixos-unstable",
         "nixpkgs": "nixpkgs_2",
-        "unstable": "unstable"
+        "unstable": "unstable",
+        "zed-nixpkgs": "zed-nixpkgs"
       }
     },
     "systems": {
@@ -226,6 +227,22 @@
         "owner": "NixOS",
         "repo": "nixpkgs",
         "rev": "6f6fca055bb8d39ccd3e3be1e27d8b58b9a442d1",
+        "type": "github"
+      }
+    },
+    "zed-nixpkgs": {
+      "locked": {
+        "lastModified": 1791191277,
+        "narHash": "sha256-i8KuaINOYLvB2oQikGvtRmdZRxATRxsI9Yad2pp7dEA=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "aa48d347080940b8a2b8d2f48228674e280a3514",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
         "type": "github"
       }
     }

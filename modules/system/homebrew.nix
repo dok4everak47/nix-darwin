@@ -46,6 +46,10 @@ in {
         name = "rana-gmbh/netfluss";
         trusted = true;
       }
+      {
+        name = "omlahore/tap";
+        trusted = true;
+      }
     ];
 
     brews = [
@@ -53,14 +57,18 @@ in {
       # Python console lorem ipsum generator (per9000/lorem) — nixpkgs
       # "lorem" is an unrelated GNOME app, so this one lives on Homebrew.
       {name = "lorem";}
+      "removemacai"
     ];
 
     casks = [
+      "robbietilton-compositor"
+      "snapzy"
       "basictex"
       "flowvision"
       "font-symbols-only-nerd-font"
       "forel"
       "whatcable"
+      "input-source-pro"
       # "tinycast"
       # "netfluss"
       # NOTE: emacs-app intentionally absent — Nix Emacs

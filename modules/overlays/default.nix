@@ -10,6 +10,7 @@
   pkgs,
   unstable,
   nixos-unstable,
+  zed-nixpkgs,
   ...
 }: {
   nixpkgs.overlays = [
@@ -67,21 +68,21 @@
       });
     })
 
-    # ── pi-coding-agent: prebuilt 1.0.0 release binary (2026-10-02) ──────
+    # ── pi-coding-agent: prebuilt 0.99.2 release binary (2026-10-01) ──────
     # 26.05 stable, the atuin-pinned `unstable` input (rev 6f6fca05, 2026-08)
     # and even nixos-unstable's branch still ship pi 0.82.1 / 0.87.1, so the
     # old `unstable.legacyPackages...pi-coding-agent` override is gone. Fetch
     # the official standalone release tarball (aarch64-darwin) instead. Hash =
-    # sha256 of pi-darwin-arm64.tar.gz, verified 2026-10-02 against the
-    # release's SHA256SUMS
-    # (97291e7d2eb2d7d95ab1f67d26de7902302201bc8786c132bbbc9e53fa8526cc).
+    # sha256 of pi-darwin-arm64.tar.gz, re-verified 2026-10-04 against the
+    # downloaded tarball
+    # (564707a7378dae4cce29d92693b45b49d3a3a25187dddcc6d8c2e4aca4fb3719).
     #
-    # 1.0.0 (2026-10-01) 打包布局与 0.99.2 完全一致 → installPhase/postFixup
-    # 不动: 仍是 `pi/` 根, 兄弟文件 (package.json / photon_rs_bg.wasm /
-    # native/darwin/prebuilds/darwin-arm64/darwin-platform.node) 齐在,
-    # PI_SKIP_VERSION_CHECK / PI_TELEMETRY 也仍被二进制读取。行为差异: 1.0 起
-    # TUI 默认全屏 (要保留终端滚动历史设 settings 的 tuiMode: "regular", 或
-    # 启动加 --tui-mode regular)。
+    # 回退 1.0.0 → 0.99.2 (2026-10-04): 打包布局与 1.0.0 完全一致 →
+    # installPhase/postFixup 不动: 仍是 `pi/` 根, 兄弟文件 (package.json /
+    # photon_rs_bg.wasm / native/darwin/prebuilds/darwin-arm64/
+    # darwin-platform.node) 齐在, PI_SKIP_VERSION_CHECK / PI_TELEMETRY 也仍被
+    # 二进制读取。再升 1.0.0+ 须知: 1.0 起 TUI 默认全屏 (保留终端滚动历史设
+    # settings 的 tuiMode: "regular", 或启动加 --tui-mode regular)。
     #
     # 布局: tarball 根是 `pi/`, 里面不只是 `pi` 二进制, 还有 package.json、
     # photon_rs_bg.wasm 和 native/darwin/prebuilds/.../darwin-platform.node,
@@ -91,11 +92,11 @@
     (final: prev: {
       pi-coding-agent = prev.stdenvNoCC.mkDerivation (finalAttrs: {
         pname = "pi-coding-agent";
-        version = "1.0.0";
+        version = "0.99.2";
 
         src = prev.fetchurl {
           url = "https://github.com/earendil-works/pi/releases/download/v${finalAttrs.version}/pi-darwin-arm64.tar.gz";
-          hash = "sha256-lykefS6y19lasfZ9Jt55AjAiAbyHhsEyu7yeU/qFJsw=";
+          hash = "sha256-VkcHpzeNrkzOKdkmk7RbSdOjolGH3dzG2MLkrKT7Nxk=";
         };
 
         dontUnpack = true;
@@ -268,6 +269,16 @@
     # Opencode: Unstable version
     (final: prev: {
       opencode = nixos-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.opencode;
+    })
+
+    # ── zed-editor: nixpkgs-unstable 1.22.0 (2026-10-06) ───────────────
+    # 26.05 stable 的 zed-editor 是 1.3.6, nixos-unstable 也只到 1.21.0,
+    # 上游当前 stable 是 1.22.0 → 用专用的 zed-nixpkgs input 覆盖。
+    # 该 input 的 zed-editor 1.22.0 在 cache.nixos.org 有预编译包, rebuild
+    # 只下载不编译。nixpkgs(26.05 或 nixos-unstable) 追上来后连同 flake.nix
+    # 里的 zed-nixpkgs input 一起删掉。
+    (final: prev: {
+      zed-editor = zed-nixpkgs.legacyPackages.${prev.stdenv.hostPlatform.system}.zed-editor;
     })
   ];
 }

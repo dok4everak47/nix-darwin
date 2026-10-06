@@ -34,6 +34,15 @@
     # (when the numtide cache is trusted -- see modules/system/nix.nix).
     llm-agents.url = "github:numtide/llm-agents.nix";
 
+    # ── zed-editor 1.22.0 ──────────────────────────────────────────────
+    # 默认 `nixpkgs` (26.05 stable) 里 zed-editor 还是 1.3.6; 现成的滚动 input
+    # `nixos-unstable` 也差一天 (1.21.0)。上游当前 stable release 是 1.22.0
+    # (2026-09-30, nixpkgs-unstable 当日跟进), 所以专门引一个 nixpkgs-unstable
+    # input 只为这一个包 —— 它的 1.22.0 在 cache.nixos.org 有预编译包
+    # (实测 118 MiB 下载), rebuild 不必从源码编 Rust。
+    # nixos-unstable / stable 追到 >= 1.22.0 后, 删掉这个 input 和对应 overlay。
+    zed-nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+
   };
 
   outputs = inputs @ {
@@ -44,6 +53,7 @@
     nixos-unstable,
     areofyl-fetch,
     llm-agents,
+    zed-nixpkgs,
   }: {
     # Build darwin flake using:
     # $ darwin-rebuild switch --flake .#dok4ever-mac
@@ -54,9 +64,11 @@
         #   - unstable  → overlays (atuin 18.17.1)
         #   - areofyl-fetch → programs/fetch.nix
         #   - llm-agents → system/packages.nix (AI coding agents)
+        #   - zed-nixpkgs → overlays (zed-editor 1.22.0)
         inherit unstable nixos-unstable;
         areofyl-fetch = inputs.areofyl-fetch;
         llm-agents = inputs.llm-agents;
+        zed-nixpkgs = inputs.zed-nixpkgs;
       };
 
       modules = [
