@@ -12,9 +12,10 @@ in {
   # Nix is the control plane; Homebrew only carries things that nixpkgs
   # cannot (or cannot with the required feature set):
   #   - imagemagick-full: migrated to nixpkgs imagemagick 2026-09-03
-  #     (packages.nix, ghostscriptSupport=true). ffmpeg-full was removed
-  #     2026-08 (unused) — do not re-add unless a project needs full
-  #     codec support not in nixpkgs ffmpeg.
+  #     (packages.nix, ghostscriptSupport=true). ffmpeg-full 不要重新引入
+  #     (2026-08 删除, 无项目需要那一堆 codec)。
+  #   - ffmpeg / yt-dlp: 2026-10-07 起用 brew 版（用户要求，见 AGENTS.md
+  #     规则 4 例外）—— 版本跟进不必 rebuild，PATH 里 /opt/homebrew/bin 在首位。
   #   - Casks: GUI apps, fonts and the BasicTeX pkg installer.
   # Everything else (CLI tools) lives in nixpkgs — see system/packages.nix.
   #
@@ -62,6 +63,10 @@ in {
       # (--impersonate chrome) + yt-dlp-ejs/deno，且 `brew upgrade` 无需
       # rebuild 就能跟进版本。必须声明在这里，否则 cleanup=uninstall 会删掉。
       "yt-dlp"
+      # ffmpeg (2026-10-07, 用户要求从 nixpkgs 迁来): brew 版 9.x 自带
+      # ffmpeg/ffprobe/ffplay，`brew upgrade` 跟进版本不用 rebuild。
+      # 注意：不要换成 ffmpeg-full。同样是 cleanup=uninstall 前必须声明项。
+      "ffmpeg"
     ];
 
     casks = [

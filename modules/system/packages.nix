@@ -17,8 +17,8 @@
   # imagemagick migrated from brew imagemagick-full 2026-09-03: nixpkgs 26.05
   # default has heic/jxl/webp/raw/rsvg/tiff delegates + ghostscript override
   # (PDF delegate parity with brew full) in the entry below.
-  # (ffmpeg-full removed 2026-08; plain ffmpeg re-added 2026-08-29 per user request —
-  #  ffmpeg-full adds extra codecs, plain ffmpeg has ffmpeg/ffprobe/ffplay.)
+  # ffmpeg-full 不要再引入（2026-08 删除）；普通 ffmpeg 2026-10-07 起改用
+  # Homebrew 版（modules/system/homebrew.nix 的 brews）。
   #
   # Overlays (openmp empty-patch filter, opencode codesign fix, atuin from
   # unstable with search patch) live in modules/overlays/.
@@ -50,7 +50,8 @@
       # yt-dlp 2026-10-07 迁到 Homebrew（用户要求）：brew 版 pypi_packages 带
       # curl-cffi (--impersonate chrome) + yt-dlp-ejs，依赖 deno；
       # 声明在 modules/system/homebrew.nix 的 brews。见 AGENTS.md 规则 4 例外。
-      ffmpeg # video/audio toolkit (includes ffprobe, ffplay); 2026-08-29 re-added per user request (nixpkgs, not brew)
+      # ffmpeg 2026-10-07 迁到 Homebrew（用户要求）：brew 版 9.x 含 ffmpeg/ffprobe/ffplay，
+      # 声明在 modules/system/homebrew.nix 的 brews。见 AGENTS.md 规则 4 例外。
       (imagemagick.override {ghostscriptSupport = true;}) # image toolkit (magick/convert); from brew imagemagick-full 2026-09-03; ghostscript = PDF delegate parity
       # omniwm removed 2026-09-01 (unused)
       (emacs.override {
