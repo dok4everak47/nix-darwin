@@ -58,6 +58,10 @@ in {
       # "lorem" is an unrelated GNOME app, so this one lives on Homebrew.
       {name = "lorem";}
       "removemacai"
+      # yt-dlp (2026-10-07, 用户要求从 nixpkgs 迁来): brew 版自带 curl-cffi
+      # (--impersonate chrome) + yt-dlp-ejs/deno，且 `brew upgrade` 无需
+      # rebuild 就能跟进版本。必须声明在这里，否则 cleanup=uninstall 会删掉。
+      "yt-dlp"
     ];
 
     casks = [

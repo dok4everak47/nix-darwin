@@ -47,7 +47,9 @@
       neomutt
       isync
       yazi
-      yt-dlp # video downloader (CLI); 2026-08-29 re-added per user request (nixpkgs, not brew -- AGENTS.md rule 4)
+      # yt-dlp 2026-10-07 迁到 Homebrew（用户要求）：brew 版 pypi_packages 带
+      # curl-cffi (--impersonate chrome) + yt-dlp-ejs，依赖 deno；
+      # 声明在 modules/system/homebrew.nix 的 brews。见 AGENTS.md 规则 4 例外。
       ffmpeg # video/audio toolkit (includes ffprobe, ffplay); 2026-08-29 re-added per user request (nixpkgs, not brew)
       (imagemagick.override {ghostscriptSupport = true;}) # image toolkit (magick/convert); from brew imagemagick-full 2026-09-03; ghostscript = PDF delegate parity
       # omniwm removed 2026-09-01 (unused)

@@ -21,6 +21,7 @@
    - 不要重新引入 `/opt/homebrew/opt/ffmpeg-full/bin`（ffmpeg-full 已删，2026-08）。
 3. **Homebrew 用 `onActivation.cleanup = "uninstall"`**：任何未在 `homebrew.brews` 声明的顶层公式会在 rebuild 时被卸载。新增 brew 包必须同步声明。
 4. **不要引入 Homebrew 能替代 nixpkgs 的 CLI 工具**。CLI 工具走 nixpkgs（`modules/system/packages.nix`），Homebrew 只留 keg-only full builds + casks。
+   - **例外（2026-10-07，用户要求）**：`yt-dlp` 用 Homebrew 版，声明在 `modules/system/homebrew.nix` 的 `brews`。理由：brew 的 `pypi_packages` 带 `curl-cffi`（`--impersonate chrome`，X/Twitter 下载必需）+ `yt-dlp-ejs`（`deno`），且 `brew upgrade yt-dlp` 不必 rebuild 就能跟进版本；从 `packages.nix` 移除。其余工具仍按第 4 条走 nixpkgs。
 5. **Home-manager 刻意不用**（用户决定，永久）。GUI 应用装 cask 或 nixpkgs，不用 home-manager 包管理。
 6. **`nix flake check --no-build` 是改完配置后的最低验证门槛**。改完必须跑，全绿才能交差。
 
@@ -102,4 +103,4 @@ scripts/             # npm-proxy-build.sh 等（llm-agents 构建期依赖）
 - ❌ 不要重新引入 ffmpeg-full
 - ❌ 不要删 fixes/ 里的 workaround（每个都有注释原因）
 - ❌ 不要引入 home-manager
-- ❌ 不要把 brew 能搞定的 CLI 工具从 nixpkgs 挪到 brew
+- ❌ 不要把 brew 能搞定的 CLI 工具从 nixpkgs 挪到 brew（唯一例外：yt-dlp，见铁律 4）
