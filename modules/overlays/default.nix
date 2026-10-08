@@ -68,21 +68,23 @@
       });
     })
 
-    # ── pi-coding-agent: prebuilt 0.99.2 release binary (2026-10-01) ──────
+    # ── pi-coding-agent: prebuilt 1.1.0 release binary (2026-10-08) ──────
     # 26.05 stable, the atuin-pinned `unstable` input (rev 6f6fca05, 2026-08)
     # and even nixos-unstable's branch still ship pi 0.82.1 / 0.87.1, so the
     # old `unstable.legacyPackages...pi-coding-agent` override is gone. Fetch
     # the official standalone release tarball (aarch64-darwin) instead. Hash =
-    # sha256 of pi-darwin-arm64.tar.gz, re-verified 2026-10-04 against the
+    # sha256 of pi-darwin-arm64.tar.gz, re-verified 2026-10-08 against the
     # downloaded tarball
-    # (564707a7378dae4cce29d92693b45b49d3a3a25187dddcc6d8c2e4aca4fb3719).
+    # (3455b13de35c15a5893cdebc922678199e90a7ce99b06cbc23f37860e90d63c7).
     #
-    # 回退 1.0.0 → 0.99.2 (2026-10-04): 打包布局与 1.0.0 完全一致 →
-    # installPhase/postFixup 不动: 仍是 `pi/` 根, 兄弟文件 (package.json /
-    # photon_rs_bg.wasm / native/darwin/prebuilds/darwin-arm64/
-    # darwin-platform.node) 齐在, PI_SKIP_VERSION_CHECK / PI_TELEMETRY 也仍被
-    # 二进制读取。再升 1.0.0+ 须知: 1.0 起 TUI 默认全屏 (保留终端滚动历史设
-    # settings 的 tuiMode: "regular", 或启动加 --tui-mode regular)。
+    # 升级 0.99.2 → 1.1.0 (2026-10-08, 历史: 2026-10-04 曾因 1.0 起「TUI 默认
+    # 全屏」回退到 0.99.2): 打包布局与 0.99.2 完全一致 → installPhase/postFixup
+    # 不动: 仍是 `pi/` 根, 兄弟文件 (package.json / photon_rs_bg.wasm /
+    # native/darwin/prebuilds/darwin-arm64/darwin-platform.node) 齐在,
+    # PI_SKIP_VERSION_CHECK / PI_TELEMETRY 也仍被二进制读取。
+    # 本次配套: ~/.pi/agent/settings.json 已设 tuiMode: "regular" 保住终端滚动
+    # 历史 (否则 1.0+ 默认全屏)。另 1.0.3 把 azure provider 由
+    # azure-openai-responses 更名 azure (本机未用, 无需改)。
     #
     # 布局: tarball 根是 `pi/`, 里面不只是 `pi` 二进制, 还有 package.json、
     # photon_rs_bg.wasm 和 native/darwin/prebuilds/.../darwin-platform.node,
@@ -92,11 +94,11 @@
     (final: prev: {
       pi-coding-agent = prev.stdenvNoCC.mkDerivation (finalAttrs: {
         pname = "pi-coding-agent";
-        version = "0.99.2";
+        version = "1.1.0";
 
         src = prev.fetchurl {
           url = "https://github.com/earendil-works/pi/releases/download/v${finalAttrs.version}/pi-darwin-arm64.tar.gz";
-          hash = "sha256-VkcHpzeNrkzOKdkmk7RbSdOjolGH3dzG2MLkrKT7Nxk=";
+          hash = "sha256-NFWxPeNcFaWJPN68kiZ4GZ6Qp86ZsGy8I/N4YOkNY8c=";
         };
 
         dontUnpack = true;
