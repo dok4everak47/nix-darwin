@@ -87,6 +87,7 @@
       delta # git-delta
       jq
       lazygit
+      gh # GitHub CLI: GhosttyEXTREME 的 Git panel 栏位(PR/checks)靠它读 (2026-10-09 加; nixpkgs 铁律 4, 不走 brew)
       nb
       ntfy
       poppler-utils # pdftotext, pdfinfo, ... (poppler is the GLib lib)
