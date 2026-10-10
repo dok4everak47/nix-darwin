@@ -95,6 +95,11 @@
       ripgrep
       _7zz # 7-Zip CLI (binary is `7zz`; replaces brew sevenzip)
       socat
+      # ccs (ccfullsearch 0.16.0, 2026-10-11): Claude Code 插件
+      # ccs@ccfullsearch 的 CLI, 检索本机 Claude Code / Codex / Opencode 历史
+      # 会话; 插件 skill 要求 ccs 在 PATH。不在 nixpkgs → 派生见
+      # modules/overlays/default.nix (pin 上游 release 资产)。
+      ccfullsearch
 
       # ── AI coding agents (numtide/llm-agents.nix) ──────────────────────
       # Pulled from llm-agents' own pinned nixpkgs-unstable (not our stable

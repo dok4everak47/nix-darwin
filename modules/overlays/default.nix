@@ -282,5 +282,60 @@
     (final: prev: {
       zed-editor = zed-nixpkgs.legacyPackages.${prev.stdenv.hostPlatform.system}.zed-editor;
     })
+
+    # ── ccs (ccfullsearch): prebuilt 0.16.0 release binary (2026-10-11) ──
+    # `ccs` 是 Claude Code 插件 ccs@ccfullsearch (github:materkey/ccfullsearch)
+    # 的 CLI: 全文检索本机 Claude Code / Codex / Opencode 的历史会话。
+    # 插件的 skill 要求 `ccs` 在 PATH 上 ("Binary ccs must be in PATH"),
+    # 而插件本体不带二进制 —— 故这里把它装进系统 profile。
+    #
+    # 不在 nixpkgs: 已实测 `nix eval nixpkgs#ccfullsearch.version` → does not
+    # provide attribute。走 pi-coding-agent / herdr 同款做法: pin 上游
+    # aarch64-darwin release 资产, 不从源码编 Rust TUI (省 cargoHash、数分钟
+    # 编译和数百 MB store; 且沙箱里拉 crates.io 更易受代理抖动影响)。
+    # 升级: 改 version 后重算 hash —— `nix store prefetch-file --json <url>`。
+    # Hash = sha256 of ccfullsearch-aarch64-apple-darwin.tar.gz
+    # (release v0.16.0, 2026-06-12), 2026-10-11 双向核对:
+    #   nix store prefetch-file → sha256-UGn2uLqBbenaaoBQpoCtOtAAekGb5uhaMj/6kk490jM=
+    #   nix32                    → 0cyj7m795yiz69dfirlv85x01l1smn0acl40dbdfjvc1pawgcsah
+    #   shasum -a 256            → 5069f6b8ba816de9da6a8050a680ad3ad0007a419be6e85a323ffa924e3dd233
+    (final: prev: {
+      ccfullsearch = prev.stdenvNoCC.mkDerivation (finalAttrs: {
+        pname = "ccs";
+        version = "0.16.0";
+
+        src = prev.fetchurl {
+          url = "https://github.com/materkey/ccfullsearch/releases/download/v${finalAttrs.version}/ccfullsearch-aarch64-apple-darwin.tar.gz";
+          hash = "sha256-UGn2uLqBbenaaoBQpoCtOtAAekGb5uhaMj/6kk490jM=";
+        };
+
+        # tarball 里只有 ccs 二进制 + README/CHANGELOG/LICENSE, 没有构建脚本。
+        dontBuild = true;
+        strictDeps = true;
+
+        installPhase = ''
+          runHook preInstall
+          install -Dm755 ccs $out/bin/ccs
+          runHook postInstall
+        '';
+
+        # macOS 27: nix fixup 改写过的 Mach-O 签名失效会被 SIGKILL (Killed: 9),
+        # 故 fixup 后重新 adhoc 签名 —— 与 opencode / herdr / pi-coding-agent
+        # 的 postFixup 同款。(实测: 未签的 release 二进制直跑正常, 签名是给
+        # nix store 里的改写副本补的。)
+        postFixup = ''
+          /usr/bin/codesign --force --sign - $out/bin/ccs
+        '';
+
+        meta = {
+          description = "Search and browse Claude Code, Codex and Opencode session history (CLI/TUI)";
+          homepage = "https://github.com/materkey/ccfullsearch";
+          changelog = "https://github.com/materkey/ccfullsearch/blob/v${finalAttrs.version}/CHANGELOG.md";
+          license = prev.lib.licenses.mit;
+          mainProgram = "ccs";
+          platforms = ["aarch64-darwin"];
+        };
+      });
+    })
   ];
 }
