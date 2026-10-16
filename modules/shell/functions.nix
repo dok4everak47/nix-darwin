@@ -607,5 +607,13 @@ NXDEOF
         [[ "$k" == q* ]] && return 0
       done
     }
+
+    # ── Hermes 会话浏览/续跑: hr ────────────────────────────────────────
+    # 交互式会话选择器 (上下键 + 打字过滤 + 回车续跑), 等价 codex resume 的
+    # 候选列表。⚠️ 别用 `hermes resume` —— 那个子命令是解除 hermes pause
+    # 的 ESTOP, 与续会话无关。参数透传, 如: hr --source cli
+    hr() {
+      hermes sessions browse "$@"
+    }
   '';
 }

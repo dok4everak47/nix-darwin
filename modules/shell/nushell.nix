@@ -115,6 +115,8 @@ let
     alias gc = git commit -v
     alias gst = git status -sb
     alias gl = git log --oneline --graph --decorate
+    # Hermes 会话浏览/续跑(对应 zsh functions.nix 的 hr 函数)
+    alias hr = hermes sessions browse
     alias gp = git pull --rebase
     alias gd = git diff
     alias ga = git add -A
