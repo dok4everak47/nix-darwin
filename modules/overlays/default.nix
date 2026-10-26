@@ -10,6 +10,7 @@
   pkgs,
   unstable,
   nixos-unstable,
+  llm-agents,
   zed-nixpkgs,
   ...
 }: {
@@ -253,9 +254,11 @@
         };
     })
 
-    # codex : use unstable version
+    # codex : 2026-10-25 改走 llm-agents (numtide) 的包 —— 它跟上游发布更紧
+    # (0.164.0), 而 nixos-unstable 当时还停在 0.163.0。numtide 二进制缓存有
+    # 现成包, 不需要本地编译 rust。上游跟上来之前一直走这里。
     (final: prev: {
-      codex = nixos-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.codex;
+      codex = llm-agents.packages.${prev.stdenv.hostPlatform.system}.codex;
     })
 
     # ── nitter: use nixos-unstable version (2026-07-11) ───────────────
