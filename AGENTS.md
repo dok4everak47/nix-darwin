@@ -52,13 +52,16 @@ scripts/             # npm-proxy-build.sh 等（llm-agents 构建期依赖）
 2. **验证（build 测试）**：`cd /etc/nix-darwin && nix flake check --no-build` 必须全绿；**每次改完代码后必须先 build 测试过一遍**（`nix build --no-link --print-out-paths '.#darwinConfigurations.dok4ever-mac.system'` 或 `nix flake check`），**如果有报错让 AI 自己改**，改到全绿才能交差，不许把报错留给用户。
 3. **rebuild**：用户自己跑 `sudo darwin-rebuild switch --flake .#dok4ever-mac`（agent 无 sudo，不要尝试）。
 4. **提交**：`git add -A && git commit`，推送到 `gitea`（SSH, `ssh://git@gitea.luongchin.com:2222/dok4ever/nix-darwin.git`）和 `origin`（GitHub HTTPS, `github.com/dok4everak47/nix-darwin`）。
-   - push 需要代理 `127.0.0.1:7890` 在跑（NinjaDesktop / mihomo 内核）。失败先 `ninja-proxy now` 或 `lsof -nP -iTCP:7890 -sTCP:LISTEN` 确认代理，再让用户启动 NinjaDesktop。
+   - push 需要代理 `127.0.0.1:7890` 在跑（NinjaDesktop / mihomo 内核）。失败先 `nc -z -G 1 127.0.0.1 7890`（通=内核在跑），或 `curl -s http://127.0.0.1:9190/api/kernel/status` 看 `{"running":true}`（App 的 API 口）。**非 root 看不到 root 内核的监听套接字，别用 `lsof` 判死**；1.0.6 起未登录不给起内核，没代理就让用户打开 NinjaDesktop 并确认已登录。
    - **本机是 SSH 到 gitea，如果 gitea 连接被劫持/超时，检查 `~/.ssh/config` 的 ProxyCommand。**
 
 ## 已知坑
 
 ### 代理 (proxy) —— 2026-09-23 重整
-- 客户端是 **NinjaDesktop**（mihomo 内核：`/Library/LaunchDaemons/com.dok4ever.mihomo-kernel.plist` 开机常驻，配置 `~/.config/mihomo/config.yaml`，`mixed-port: 7890`，控制口 `127.0.0.1:9799`）。ClashBar 是旧客户端。
+- 客户端是 **NinjaDesktop 1.0.6**：内核由自带 root 守护 `/Library/LaunchDaemons/com.ninjaclient.service.plist`（`ninja-service`）拉起，命令行 `ninja-darwin-arm64 -d ~/Library/Application Support/NinjaDesktop -f .../bootstrap.yaml`，`mixed-port: 7890`、控制口 `127.0.0.1:9799`、App API/WebUI `127.0.0.1:9190`。ClashBar / ClashX 是旧客户端。
+- **`mixed_port` 必须保持 7890**：nix proxyEnv 与 git `http.proxy` 都指 7890，而 App 1.0.6 默认给 7897/7898/7899 —— 一旦是 7897，终端 curl/git/nix 拉包立即全断（2026-10-14 踩过）。
+- **单机只跑一颗内核**：`com.ninjaclient.service` 是 KeepAlive，会自己把内核拉回来并把 7890/9799 占住，不要再装第二套自建内核。
+- 自建内核那套（`com.dok4ever.mihomo-kernel` + `~/.config/mihomo/` + `~/.local/bin/{ninja-kernel,ninja-proxy,ninja-sub-sync}` + `mihomo-tui` + zsh `px` 别名 + `com.dok4ever.ninja-dns-guard`）**2026-10-14 已整体删除**，别再引用这些路径/命令；配置存档 `~/Desktop/mihomo-config-archive-20261014.tar.gz`。
 - **单一来源 = `modules/lib.nix` 的 `proxyHost` / `proxyPort` / `proxyUrl` / `proxyNoProxy`**（`proxyEnv` 由它们拼出）。改代理只动这几个常量。
 - 三条下发路径，别人容易搞混：
   - `nix.envVars = proxyEnv` → nix-daemon（写进 root launchd plist）。**daemon 常驻不重读环境**，改完要 `sudo launchctl kickstart -k system/org.nixos.nix-daemon`。
