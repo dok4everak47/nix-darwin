@@ -89,6 +89,7 @@ in {
       "forel"
       "whatcable"
       "input-source-pro"
+      "skills-manager"
       # "tinycast"
       # "netfluss"
       # NOTE: emacs-app intentionally absent — Nix Emacs
