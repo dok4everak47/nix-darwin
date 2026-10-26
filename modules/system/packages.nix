@@ -135,17 +135,23 @@
       # 注入方式: fetchNpmDeps 把 npmRegistryOverridesString 已 eager 进 env.NIX_NPM_REGISTRY_OVERRIDES
       # (prefetch-npm-deps/default.nix), 设函数参数不生效, 必须用 overrideAttrs 改 env attr。
       # 构建期间需先启动本地代理: 见 scripts/npm-proxy-build.sh
-      (qwen-code.overrideAttrs (old: {
-        npmDeps = old.npmDeps.overrideAttrs (final: {
-          env =
-            (final.env or {})
-            // {
-              NIX_NPM_REGISTRY_OVERRIDES = builtins.toJSON {
-                "registry.npmjs.org" = "myproto://127.0.0.1";
+      # 2026-10-25: 上游 qwen-code 已改用 pnpm (npmDeps = null)。这个 npm registry
+      # 覆盖只在 npmDeps 存在时生效; 为 null 时保持原包不动, 否则 eval 报
+      # "expected a set but found null"。将来上游换回 npm 会自动恢复。
+      (qwen-code.overrideAttrs (old:
+        if old ? npmDeps && old.npmDeps != null
+        then {
+          npmDeps = old.npmDeps.overrideAttrs (final: {
+            env =
+              (final.env or {})
+              // {
+                NIX_NPM_REGISTRY_OVERRIDES = builtins.toJSON {
+                  "registry.npmjs.org" = "myproto://127.0.0.1";
+                };
               };
-            };
-        });
-      }))
+          });
+        }
+        else { }))
     ]);
 
   # ── LANG (2026-08-14) ────────────────────────────────────────────────
