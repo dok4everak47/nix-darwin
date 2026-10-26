@@ -1,9 +1,25 @@
 {
   config,
+  lib,
   pkgs,
   llm-agents,
   ...
 }: {
+  # ── allowUnfree 谓词: 只为 claude-code 开洞 (2026-10-26) ──────────────
+  # 在此之前本机**没有**开过 unfree: claude-code 一直从 llm-agents 的
+  # 包集合取 (它的 nixpkgs 已预评过 allowUnfree, 跨 flake 的包进了我们的
+  # buildEnv 后不再二次校验)。2026-10-26 用户要求降级到 2.1.287, 而
+  # llm-agents 的提交历史里没有 2.1.287 (…299 → 2.1.273, 跨过去了), 只能
+  # 在本仓库自己打包 (见 modules/overlays/default.nix), 这个包走**我们的**
+  # pkgs → 立刻撞上 meta.license.unfree 的 eval 断言:
+  #   Package ‘claude-code-2.1.287’ has an unfree license
+  # 用谓词而不是 allowUnfree = true: 只放行 claude-code, 其余 unfree 包
+  # (以及将来误引入的) 照样在 eval 期被拦下。
+  nixpkgs.config.allowUnfreePredicate = pkg:
+    builtins.elem (pkg.pname or "") [
+      "claude-code"
+    ];
+
   # Packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
   #
@@ -101,6 +117,15 @@
       # modules/overlays/default.nix (pin 上游 release 资产)。
       ccfullsearch
 
+      # claude-code: 2026-10-26 起**不再**取 llm-agents 的版本 —— 用户要求
+      # 钉在 2.1.287 (llm-agents 当前是 2.1.310, 且其提交历史里没有 2.1.287)。
+      # 改由 modules/overlays/default.nix 的 claude-code overlay 提供
+      # (同款 GCS 二进制 + 同款 wrapper flag), 这里用 pkgs.claude-code 引用
+      # **必须**放在 llm-agents 那个 `with` 块之外, 否则会被 llm-agents 的
+      # 2.1.310 同名属性覆盖回旧值。用户要回新版时: 删 overlay, 把这一行
+      # 挪回下面的 llm-agents 列表。
+      claude-code
+
       # ── AI coding agents (numtide/llm-agents.nix) ──────────────────────
       # Pulled from llm-agents' own pinned nixpkgs-unstable (not our stable
       # 26.05). claude-code is meta.license.unfree, but cross-flake package
@@ -110,7 +135,6 @@
       # Browse the full list: nix run github:numtide/llm-agents.nix
     ]
     ++ (with llm-agents.packages.${pkgs.stdenv.hostPlatform.system}; [
-      claude-code
       gemini-cli
       crush # glamourous AI coding agent (charmbracelet/crush)
       # qwen-code 的 npmDeps FOD (prefetch-npm-deps, isahc) 直连 registry.npmjs.org

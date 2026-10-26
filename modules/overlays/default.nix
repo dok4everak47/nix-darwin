@@ -254,6 +254,63 @@
         };
     })
 
+    # ── claude-code: pin 2.1.287 (2026-10-26, 用户要求降级) ─────────────
+    # llm-agents rev 164e1ac 出的是 2.1.310, 且其历史里根本没有 2.1.287
+    # (package.nix 的提交点版本是 ...299 → 2.1.273, 跨过了 2.1.287), 所以
+    # 不能在 llm-agents 里找 rev 钉住 —— 直接照它的平台源模板重打包:
+    # 同一个 GCS 分发地址 {version}/darwin-arm64/claude, 同一套 wrapper flag
+    # (DISABLE_AUTOUPDATER / argv0 / DISABLE_INSTALLATION_CHECKS)。
+    #
+    # 钉死是刻意的 (上游撤版本会改 latest 指针, 这里不跟): 升级 = 同时改
+    # version 和 hash 再 rebuild。
+    # hash 来源: manifest.json 的 platforms.darwin-arm64.checksum
+    # = 6eab8333...41ea (sha256 十六进制), 已用 `shasum -a 256` 对实际下载
+    # 的 darwin-arm64 二进制复核一致; 换算成 SRI 见下面 hash 字段。
+    # 何时移除: 用户要回新版时, 删掉这段 overlay, 恢复纯 llm-agents 版本。
+    (final: prev: {
+      claude-code = prev.stdenvNoCC.mkDerivation (finalAttrs: {
+        pname = "claude-code";
+        version = "2.1.287";
+
+        src = prev.fetchurl {
+          url = "https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/${finalAttrs.version}/darwin-arm64/claude";
+          hash = "sha256-bquDM/4hIVUxANj0C/raOEo+mJuU+Ufhi6Znem/LQeo=";
+        };
+
+        dontUnpack = true;
+        dontStrip = true; # 不要动 bun 运行时
+        strictDeps = true; # 与 llm-agents 一致: 关掉 cargo/go 式的隐式依赖回退
+        nativeBuildInputs = [prev.makeWrapper];
+
+        installPhase = ''
+          runHook preInstall
+          install -Dm755 $src $out/bin/claude
+          runHook postInstall
+        '';
+
+        # 与 llm-agents 的 postFixup 一致: 关自动更新/安装方式检查, 保住进程名
+        # (PS 里显示 claude 而不是 .claude-wrapped_)。远端控制与遥测**不**关,
+        # 免得远端控制失效 (见 llm-agents#2811)。
+        postFixup = ''
+          wrapProgram $out/bin/claude \
+            --argv0 claude \
+            --set DISABLE_AUTOUPDATER 1 \
+            --set-default DISABLE_NON_ESSENTIAL_MODEL_CALLS 1 \
+            --set DISABLE_INSTALLATION_CHECKS 1
+        '';
+
+        meta = {
+          description = "Agentic coding tool that lives in your terminal, understands your codebase, and helps you code faster";
+          homepage = "https://claude.ai/code";
+          changelog = "https://github.com/anthropics/claude-code/releases";
+          license = prev.lib.licenses.unfree;
+          sourceProvenance = [prev.lib.sourceTypes.binaryNativeCode];
+          mainProgram = "claude";
+          platforms = ["aarch64-darwin"];
+        };
+      });
+    })
+
     # codex : 2026-10-25 改走 llm-agents (numtide) 的包 —— 它跟上游发布更紧
     # (0.164.0), 而 nixos-unstable 当时还停在 0.163.0。numtide 二进制缓存有
     # 现成包, 不需要本地编译 rust。上游跟上来之前一直走这里。
