@@ -67,6 +67,17 @@ in {
       # ffmpeg/ffprobe/ffplay，`brew upgrade` 跟进版本不用 rebuild。
       # 注意：不要换成 ffmpeg-full。同样是 cleanup=uninstall 前必须声明项。
       "ffmpeg"
+      # ghidra (2026-10-26, REA 的深度原生分析 provider)。
+      # 规则 4 例外：nixpkgs 只有 12.0.4，而 REA 6.8.0 的 GhidraReleasePolicy
+      # 只接受 major.minor == 12.1（12.1.4 为 verified，其余 12.1.x 为
+      # compatible，其它一律 unsupported）。brew 是唯一能拿到 12.1.x 的渠道。
+      # 运行时校验 $GHIDRA_INSTALL_DIR/Ghidra/application.properties + support/analyzeHeadless
+      # + Ghidra/Features/Decompiler/os/mac_arm_64/decompile（故指向 libexec）。
+      "ghidra"
+      # openjdk@21 (2026-10-26): ghidra 12.1.x 的硬依赖，REA 的 JavaProbe 也要求
+      # 64-bit full JDK >= 21。虽然 brew 会作为 ghidra 的依赖自动带入，但 cleanup=
+      # uninstall 只豁免传递依赖的判定并不可靠，显式声明以固定版本线（别升到 @25）。
+      "openjdk@21"
     ];
 
     casks = [

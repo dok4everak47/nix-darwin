@@ -31,6 +31,22 @@ in {
       EDITOR = "nvim";
       VISUAL = "nvim";
       GIT_EDITOR = "nvim";
+
+      # ── Ghidra / JDK, for REA (2026-10-26) ──────────────────────────
+      # REA (rea-agents 6.8.0) 的深度原生分析 provider 只读 process.env:
+      # 没有配置文件回退, 也没有 CLI flag, 只认 GHIDRA_INSTALL_DIR + JAVA_HOME。
+      # 放在这里而不是 ~/.zshrc, 因为本机 ZDOTDIR=/etc/zdotdir 让 ~/.zshenv
+      # 永不生效, 而 ~/.zshrc 只覆盖交互 shell —— IDE task runner、npm
+      # lifecycle、agent 子进程都读不到, 会报 missing_analysis_engine。
+      #
+      # Ghidra: 指向 libexec, 因为 REA 校验这三个路径都在它下面:
+      #   Ghidra/application.properties / support/analyzeHeadless /
+      #   Ghidra/Features/Decompiler/os/mac_arm_64/decompile
+      # 用 opt 软链而非 Cellar 版本号路径, brew 升级 ghidra 后无需改这里。
+      # 版本要求: REA 的 GhidraReleasePolicy 只接受 12.1.x (见 homebrew.nix)。
+      GHIDRA_INSTALL_DIR = "/opt/homebrew/opt/ghidra/libexec";
+      # JDK: Ghidra 12.1.x 要求 21+; REA 的 JavaProbe 要求 64-bit full JDK。
+      JAVA_HOME = "/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home";
     }
     // proxyVars;
 
