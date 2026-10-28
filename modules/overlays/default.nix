@@ -343,6 +343,27 @@
       zed-editor = zed-nixpkgs.legacyPackages.${prev.stdenv.hostPlatform.system}.zed-editor;
     })
 
+    # ── ghostty-bin: 官方 DMG 1.4.0 (2026-10-29) ────────────────────────
+    # 上游 2026-10-27 发了 v1.4.0, nixpkgs 三个分支 (nixos-26.05 /
+    # nixos-unstable / nixpkgs-unstable) 实测都还停在 1.3.1, 所以不引新
+    # input, 直接 overrideAttrs。
+    # ghostty-bin 本身就是官方 DMG 的 unpack (见 nixpkgs 的
+    # pkgs/by-name/gh/ghostty-bin/package.nix), URL 形如
+    # https://release.files.ghostty.org/<version>/Ghostty.dmg, 里面仍是
+    # 根目录下一个 Ghostty.app → 换 version + hash 就够, installPhase 不用动。
+    # hash 来源: `nix store prefetch-file --json <url>` 2026-10-29 取得
+    # (34 MiB, 上游 last-modified 2026-10-27)。
+    # 何时移除: nixpkgs (26.05 或 nixos-unstable) 追上 >= 1.4.0 后删掉这段。
+    (final: prev: {
+      ghostty-bin = prev.ghostty-bin.overrideAttrs (finalAttrs: {
+        version = "1.4.0";
+        src = prev.fetchurl {
+          url = "https://release.files.ghostty.org/${finalAttrs.version}/Ghostty.dmg";
+          hash = "sha256-OgIHXb0kMY13hCavQd7lUH1T7MRXjt6WkS7Jzm0Y0+g=";
+        };
+      });
+    })
+
     # ── ccs (ccfullsearch): prebuilt 0.16.0 release binary (2026-10-11) ──
     # `ccs` 是 Claude Code 插件 ccs@ccfullsearch (github:materkey/ccfullsearch)
     # 的 CLI: 全文检索本机 Claude Code / Codex / Opencode 的历史会话。
