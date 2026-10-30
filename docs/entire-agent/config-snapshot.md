@@ -28,11 +28,11 @@
 
 | 项 | 值 |
 | - | - |
-| Credit balance | `$99.87` USD |
-| 试用额度消耗 | `$0.13 of $100 used` |
+| Credit balance | `$99.78` USD |
+| 试用额度消耗 | `$0.22 of $100 used` |
 | 过期 | `expires Jan 28, 2027`（发放后 90 天，不结转） |
 | Payment method | `No card on file` |
-| 本月已花 | `$0.12`（其中 `dok4everak47/nix-darwin` $0.09，已删的测试项目 $0.03） |
+| 本月已花 | `$0.21`（其中 `dok4everak47/nix-darwin` $0.18，已删的测试项目 $0.03） |
 
 ## 官方限制（docs.entire.com/billing）
 
@@ -59,10 +59,14 @@
 | - | - |
 | 1 行 README 的玩具 diff | $0.03 |
 | 8 行 nix 配置 diff（commit `79af047`） | $0.09 |
+| 25 行文档 diff（commit `93a8b48`） | $0.09 |
+
+从点 `Ready for review` 到出 verdict，实测每次约 **60 秒**。
 
 计价本身是 GPT-6.1 Sol：$2/M 输入、$10/M 输出。按这个量级，$99.87 大约还能跑 300+ 次小改规模的 review。
 
 ## 相关记录
 
-- Trail #1 `Review 79af047`：判定 `Pass`、无 findings，一次真实 review 的样本；为了造 diff 用的两个脚手架分支（`review-base` / `review-79af047`）已删除，所以该 Trail 的 diff 已不可见，但运行记录仍在 Agent 的 Runs 里（`Y91ENC8D`）。
+- Trail #1 `Review 79af047`：判定 `Pass`、无 findings，一次真实 review 的样本；为了造 diff 用的两个脚手架分支（`review-base` / `review-79af047`）已删除，所以该 Trail 的 diff 已不可见，但运行记录仍在 Agent 的 Runs 里（`Y91ENC8D`）。2026-10-30 已关。
+- Trail #2 `docs: 补 Entire Agent 的 CLI 起手流程`：用 `entire trail create` 跑通的完整流程验证（开分支 → 建 Trail → 点 ready → watch → 合并 → 关 Trail），判定 `Pass`，change 合并后自动标 `merged`。已关。
 - 本机 CLI：`entire` 0.12.2，声明在 `modules/system/homebrew.nix`（cask `entire`，tap `entireio/tap`）。
