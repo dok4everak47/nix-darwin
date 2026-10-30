@@ -3,6 +3,10 @@
 `dok4everak47/nix-darwin` 这个仓库上挂了一个 Entire 的预设 Agent（`Code review`）。
 本目录记录它的触发规则、完整使用流程和花销情况，方便以后回查「怎么走」「为什么没跑」「什么时候会花钱」。
 
+> ⚠️ **当前状态（2026-10-30）**：Entire 以「新账号试用额度暂停发放」为由把本账号的试用额度清零
+>（`Credit balance $0.00`、`$0.21 of $0.21 used`），`dok4everak47` 和 `elyterminal`
+> 两个 project 下的 Code review 都已手动 `Paused`。官方说明余额归零后 `new runs do not start`，
+> 所以在额度恢复或加卡买额度之前，Agent 不会跑。下面的流程仍然有效，恢复后可直接照着走。
 | 文件 | 作用 |
 | - | - |
 | `README.md` | 本文件：完整六步流程、两张截图怎么读、不触发时怎么排查 |
@@ -209,6 +213,26 @@ entire trail update <trail号> --project gh/dok4everak47 --status closed
 - 一次完整流程（25 行文档 diff）实测 **$0.09**，从点 ready 到出 verdict 约 **60 秒**。
 
 细节数值和官方限制表见 [config-snapshot.md](config-snapshot.md)。
+
+## 六、第二个 project：`elyterminal`
+
+`~/Project/ELYTerminal` 的 origin 是自建 Gitea 而不是 GitHub，Entire 的 mirror 只支持 GitHub，
+所以只能做成 **Entire 原生仓库**：
+
+```bash
+entire project create elyterminal --owner github:dok4everak47 --owner-type account
+entire repo create elyterminal --project elyterminal
+cd ~/Project/ELYTerminal
+entire repo remote add entire /et/elyterminal/elyterminal   # 加第二个远端，不动 origin
+git push entire main
+```
+
+要点：
+
+- 仓库 Private、新加坡区（`aws-ap-southeast-1.entire.io`），Trails 默认就是开的（GitHub 镜像默认是关的）
+- 本地 `origin` 保持自建 Gitea 不变，`entire` 只是新增的第二个远端
+- CLI 里要显式带 project：`entire trail create --project et/elyterminal --title ...`
+- `entire repo edit` 只能改 visibility，Trails / Gates / Agent 绑定都得在网页上弄
 
 ## 五、重新截图
 

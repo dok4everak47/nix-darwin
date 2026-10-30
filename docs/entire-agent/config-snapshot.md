@@ -19,8 +19,11 @@
 | When to run | `On every push` |
 | Which changes | `Ready for review` |
 | Repositories | `dok4everak47/nix-darwin`（仅此一个） |
-| Active | 开 |
+| Active | **Paused**（2026-10-30 手动暂停；原本是 Active） |
 | 创建 | `dok4ever`，2026-10-30 |
+
+第二个 project `elyterminal` 下同样有一个 `Code review`（`/et/elyterminal/elyterminal`，
+Entire 原生仓库，绑定 `elyterminal`），也是 **Paused**。
 
 预设 Agent 的模型和 instructions 由 Entire 维护（页面标注 `Entire maintains this agent's model and instructions`），上游可能随时调整。
 
@@ -28,8 +31,8 @@
 
 | 项 | 值 |
 | - | - |
-| Credit balance | `$99.78` USD |
-| 试用额度消耗 | `$0.22 of $100 used` |
+| Credit balance | `$0.00` USD（2026-10-30 被清零：试用额度暂停发放） |
+| 试用额度消耗 | `$0.21 of $0.21 used` |
 | 过期 | `expires Jan 28, 2027`（发放后 90 天，不结转） |
 | Payment method | `No card on file` |
 | 本月已花 | `$0.21`（其中 `dok4everak47/nix-darwin` $0.18，已删的测试项目 $0.03） |
@@ -69,4 +72,5 @@
 
 - Trail #1 `Review 79af047`：判定 `Pass`、无 findings，一次真实 review 的样本；为了造 diff 用的两个脚手架分支（`review-base` / `review-79af047`）已删除，所以该 Trail 的 diff 已不可见，但运行记录仍在 Agent 的 Runs 里（`Y91ENC8D`）。2026-10-30 已关。
 - Trail #2 `docs: 补 Entire Agent 的 CLI 起手流程`：用 `entire trail create` 跑通的完整流程验证（开分支 → 建 Trail → 点 ready → watch → 合并 → 关 Trail），判定 `Pass`，change 合并后自动标 `merged`。已关。
+- `~/Project/ELYTerminal`：origin 是自建 Gitea，只能做成 Entire 原生仓库（project `elyterminal` + 仓库 `/et/elyterminal/elyterminal`，Private，新加坡区）。本地新增远端 `entire`，`origin` 未动。
 - 本机 CLI：`entire` 0.12.2，声明在 `modules/system/homebrew.nix`（cask `entire`，tap `entireio/tap`）。
