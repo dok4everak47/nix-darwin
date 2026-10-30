@@ -40,6 +40,7 @@
   # unstable with search patch) live in modules/overlays/.
   environment.systemPackages = with pkgs;
     [
+      visidata
       helix
       neovim
       # vi / vim → neovim (PATH 级: 任何 shell、脚本、agent 一致)
@@ -175,7 +176,7 @@
               };
           });
         }
-        else { }))
+        else {}))
     ]);
 
   # ── LANG (2026-08-14) ────────────────────────────────────────────────
