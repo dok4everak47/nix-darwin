@@ -214,7 +214,7 @@ entire trail update <trail号> --project gh/dok4everak47 --status closed
 
 细节数值和官方限制表见 [config-snapshot.md](config-snapshot.md)。
 
-## 六、第二个 project：`elyterminal`
+## 五、第二个 project：`elyterminal`
 
 `~/Project/ELYTerminal` 的 origin 是自建 Gitea 而不是 GitHub，Entire 的 mirror 只支持 GitHub，
 所以只能做成 **Entire 原生仓库**：
@@ -234,7 +234,7 @@ git push entire main
 - CLI 里要显式带 project：`entire trail create --project et/elyterminal --title ...`
 - `entire repo edit` 只能改 visibility，Trails / Gates / Agent 绑定都得在网页上弄
 
-## 五、重新截图
+## 六、重新截图
 
 页面改版后旧图会失真。重截步骤：
 
