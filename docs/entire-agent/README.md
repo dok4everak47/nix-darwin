@@ -87,7 +87,17 @@ entire trail finding    # 列 findings
 entire trail show 2     # 看某个 Trail 的状态
 ```
 
-收尾：合并照常 `git push origin main`（Entire 的 `Merge` 按钮在单人开发时永远被 approvals gate 拦住，因为不能批准自己的 trail），然后把 Trail 关掉——网页 `Close` 或 `entire trail update --status closed`。
+收尾：合并照常 `git push origin main`（Entire 的 `Merge` 按钮在单人开发时永远被 approvals gate 拦住，因为不能批准自己的 trail）。合并后 Entire 会自动把 change 标成 `merged`（2026-10-30 实测）。
+
+然后关掉 Trail：网页 `Close`，或 CLI 指定 trail 号和项目：
+
+```bash
+# 在带该 Trail 的分支上可以省略 selector
+entire trail update --status closed
+
+# 切回 main 之后必须给 trail 号和 --project，否则报 branch "main" has no discoverable project trail
+entire trail update 2 --project gh/dok4everak47 --status closed
+```
 
 ## 三、没跑？按这个顺序排查
 
