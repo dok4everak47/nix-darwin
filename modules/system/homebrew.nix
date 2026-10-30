@@ -51,6 +51,10 @@ in {
         name = "omlahore/tap";
         trusted = true;
       }
+      {
+        name = "entireio/tap";
+        trusted = true;
+      }
     ];
 
     brews = [
@@ -90,6 +94,10 @@ in {
       "whatcable"
       "input-source-pro"
       "skills-manager"
+      # entire CLI (2026-10-30): nixpkgs 26.05 没有该包, 上游只发布
+      # GoReleaser 生成的 cask (装 `entire` + `git-remote-entire` 两个
+      # binary)。属铁律 4 的「nixpkgs 无法提供」例外, 不要改成 brews。
+      "entire"
       # "tinycast"
       # "netfluss"
       # NOTE: emacs-app intentionally absent — Nix Emacs
