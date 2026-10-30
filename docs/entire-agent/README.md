@@ -6,7 +6,8 @@
 > ⚠️ **当前状态（2026-10-30）**：Entire 以「新账号试用额度暂停发放」为由把本账号的试用额度清零
 >（`Credit balance $0.00`、`$0.21 of $0.21 used`），`dok4everak47` 和 `elyterminal`
 > 两个 project 下的 Code review 都已手动 `Paused`。官方说明余额归零后 `new runs do not start`，
-> 所以在额度恢复或加卡买额度之前，Agent 不会跑。下面的流程仍然有效，恢复后可直接照着走。
+> 所以在额度恢复或加卡买额度之前，Agent 不会跑。下面的流程仍然有效，恢复后可直接照着走 —— 恢复步骤见第六节。
+
 | 文件 | 作用 |
 | - | - |
 | `README.md` | 本文件：完整六步流程、两张截图怎么读、不触发时怎么排查 |
@@ -234,7 +235,53 @@ git push entire main
 - CLI 里要显式带 project：`entire trail create --project et/elyterminal --title ...`
 - `entire repo edit` 只能改 visibility，Trails / Gates / Agent 绑定都得在网页上弄
 
-## 六、重新截图
+## 六、恢复后怎么启用（额度回来 / 加卡之后）
+
+### 第 1 步：确认真的有钱了
+
+Account → Billing → `Credit balance`。归零时页面会写 `Agents are paused because your promotional credit has run out`；
+恢复后这个提示消失、余额 > $0。加卡的话 `Payment method` 不再是 `No card on file`。
+
+### 第 2 步：把 Agent 从 Paused 切回 Active
+
+每个 project 独立，各来一次：
+
+- `dok4everak47/nix-darwin`：`entire.com/gh/dok4everak47/-/agents/<agent-id>`
+  → 右上 `Code review actions` → `Resume`
+- `elyterminal`：`entire.com/et/elyterminal/-/agents/<agent-id>` → 页面上的 `Pause/Resume` 按钮
+
+切回后状态应显示 `Active`。
+
+### 第 3 步：先确认配置没被改过
+
+Preset Agent 的模型、instructions 由 Entire 维护，可能在你暂停期间变过。
+点 `Show Setup` 对一遍：模型 / `Time limit` / `When to run` / `Which changes` / **Repositories 还是不是你想要的那个**。
+需要的话重截一张 `code-review-trigger.png`（步骤见第七节）。
+
+### 第 4 步：跑一次验证
+
+```bash
+# nix-darwin：照第一节六步流程
+cd /etc/nix-darwin
+git checkout -b fix-something && git commit -am "..."
+entire trail create --title "..." --type bug      # → 网页点 Ready for review
+
+# elyterminal：要带 --project，推的是 entire 远端
+cd ~/Project/ELYTerminal
+git checkout -b fix-something && git commit -am "..."
+git push entire main                              # 或让 trail create 替你推
+entire trail create --project et/elyterminal --title "..." --type feature
+```
+
+注意 `elyterminal` 的本地 `origin` 是自建 Gitea，`entire` 是另一个远端，
+**两者不会自动同步** —— 要同步就自己再 `git push origin main`。
+
+### 第 5 步（可选）：省着用
+
+如果恢复的额度不多，只启用一个 project 的 Agent，另一个保持 Paused。
+每次 review 大约 $0.03–0.09，按第四节的实测单价估。
+
+## 七、重新截图
 
 页面改版后旧图会失真。重截步骤：
 
