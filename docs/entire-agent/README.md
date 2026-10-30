@@ -64,6 +64,31 @@
 
 想不推代码空跑一次：给 Trail 挂个已有分支，然后点 Agent 卡片上的 `Run now`。
 
+### 用 CLI 省掉手动 push 和网页建 Trail
+
+在本仓库里，`entire trail create` 会先把当前分支推到 GitHub，再把它挂到新 Trail 上：
+
+```bash
+cd /etc/nix-darwin
+git checkout -b fix-something      # 不要直接改 main，main 上没有 Trail 也就不会审
+# ...改代码...
+git commit -am "fix(shell): ..."
+
+entire trail create --title "fix shell prompt" --type bug
+```
+
+之后**只剩一次点击**：打开它打印的 URL，点 `Ready for review`。这一步 CLI 没有对应参数（`entire trail` 全部子命令里都没有 ready/draft 开关），只能在网页上点。
+
+同一分支上后续的 push 会自动再审一次，不需要重建 Trail。看结果可以在终端里跟：
+
+```bash
+entire trail watch      # 流式打印该 Trail 的事件（review 开始/结束/findings）
+entire trail finding    # 列 findings
+entire trail show 2     # 看某个 Trail 的状态
+```
+
+收尾：合并照常 `git push origin main`（Entire 的 `Merge` 按钮在单人开发时永远被 approvals gate 拦住，因为不能批准自己的 trail），然后把 Trail 关掉——网页 `Close` 或 `entire trail update --status closed`。
+
 ## 三、没跑？按这个顺序排查
 
 1. **仓库的 Trails 开关**：Settings → General → Workflows → `Trails` 必须是开的。关着的话 Agent 根本不会被选中（当初就是先开了它才挂上 Agent 的）。
