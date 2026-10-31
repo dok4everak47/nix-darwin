@@ -85,6 +85,7 @@ in {
     ];
 
     casks = [
+      "status-trio"
       "robbietilton-compositor"
       "snapzy"
       "basictex"
