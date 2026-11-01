@@ -26,6 +26,7 @@
     ./shell/login-shell.nix # shell 切换器:登录 shell = 调度器,`sw nu|zsh` 即时切换
     ./shell/plugins.nix
     ./shell/functions.nix
+    ./shell/mkflake.nix # 交互式项目脚手架 (实现见 mkflake.zsh, 经 zshRc source 进 /etc/zdotdir/.zshrc)
 
     # ── Programs ───────────────────────────────────────────────────────
     ./programs/direnv.nix
