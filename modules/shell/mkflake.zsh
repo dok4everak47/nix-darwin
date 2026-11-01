@@ -158,10 +158,11 @@ _mkflake_refresh_pkgs() {
   fi
   trap 'rmdir "$lock" 2>/dev/null; return 130' INT TERM
   print -n "正在枚举 nixpkgs ${channel} (${arch}) 顶层包名（全量求值，较慢，可安全 Ctrl-C）… "
-  if ! timeout 2000 nix --extra-experimental-features 'nix-command flakes' eval --json \
+  timeout 2000 nix --extra-experimental-features 'nix-command flakes' eval --json \
         "github:NixOS/nixpkgs/nixos-${channel}#legacyPackages.${arch}" \
-        --apply 'x: builtins.attrNames x' >"$tmp" 2>"$tmp.err"; then
-    local rc=$?
+        --apply 'x: builtins.attrNames x' >"$tmp" 2>"$tmp.err"
+  local rc=$?
+  if (( rc != 0 )); then
     if (( rc == 124 )); then
       print "超时：nix eval 在 2000s 内仍未完成，已自动放弃（此操作本就极慢，可改日再试）。"
     else
@@ -546,7 +547,7 @@ print(" ".join(tools))
 PYEOF
 )
   print -r -- "已更新 $f"
-  print -r -- "packages = with pkgs; [$result];"
+  print -r -- "packages = [$result];"
 }
 
 mkflake() {
