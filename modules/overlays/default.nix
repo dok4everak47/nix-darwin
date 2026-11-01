@@ -418,5 +418,25 @@
         };
       });
     })
+
+    # ── librsvg: 修 svg gdk-pixbuf loader 的 rpath ─
+    # nixpkgs 的 librsvg 把 svg gdk-pixbuf loader (libpixbufloader_svg.dylib)
+    # 通过 @rpath/librsvg-2.2.dylib 链接, 但该 loader 自己没有 LC_RPATH →
+    # dlopen 失败, 于是 GTK 应用加载 SVG 图标时崩
+    # (Icon 'image-missing' not present in theme Adwaita)。
+    # 修复: 给 svg loader 补 LC_RPATH 指向 $out/lib; macOS 重写 Mach-O 后必须
+    # 重签名, 否则被 SIGKILL。librsvg 自带的 loaders.cache 本就含 svg 条目,
+    # 仅 loader 可 dlopen 即可, 无需重生成 cache。
+    (final: prev: {
+      librsvg = prev.librsvg.overrideAttrs (old: {
+        postFixup = (old.postFixup or "") + ''
+          SVG_LOADER=$(find "$out/lib" -name 'libpixbufloader_svg.dylib' 2>/dev/null | head -n1)
+          if [ -n "$SVG_LOADER" ]; then
+            /usr/bin/install_name_tool -add_rpath "$out/lib" "$SVG_LOADER" 2>/dev/null || true
+            /usr/bin/codesign --force --sign - "$SVG_LOADER" 2>/dev/null || true
+          fi
+        '';
+      });
+    })
   ];
 }
