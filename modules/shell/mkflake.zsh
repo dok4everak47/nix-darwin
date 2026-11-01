@@ -148,7 +148,7 @@ _mkflake_refresh_pkgs() {
   # 并发锁：防止多个 mkflake 同时跑重 nix eval / 拉取，把 CPU 拉满导致机器过热
   local lock="${core:h}/.refresh.lock" lts
   if [[ -d "$lock" ]]; then
-    lts=$(stat -f %m "$lock" 2>/dev/null || echo 0)
+    lts=$(date -r "$lock" +%s 2>/dev/null); lts=${lts//[^0-9]/}; [[ -z "$lts" ]] && lts=0
     (( $(date +%s) - lts > 1800 )) && rmdir "$lock" 2>/dev/null
   fi
   if ! mkdir "$lock" 2>/dev/null; then
@@ -717,7 +717,7 @@ _mkflake_pkgs() {
   local cache="${XDG_CACHE_HOME:-$HOME/.cache}/mkflake/python-modules-${_mkf_channel}.txt"
   if [[ -f "$cache" ]]; then
     local mts now
-    now=$(date +%s); mts=$(stat -f %m "$cache" 2>/dev/null || echo 0)
+    now=$(date +%s); mts=$(date -r "$cache" +%s 2>/dev/null); mts=${mts//[^0-9]/}; [[ -z "$mts" ]] && mts=0
     if (( now - mts < 86400 )); then
       _mkf_pylibs=(${(f)"$(cat "$cache")"})
       return 0
