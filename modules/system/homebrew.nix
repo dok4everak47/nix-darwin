@@ -28,6 +28,10 @@ in {
     # forel cask lives in the lab421 tap.
     taps = [
       {
+        name = "wxtsky/tap";
+        trusted = true;
+      }
+      {
         name = "lab421/tap";
         trusted = true;
       }
@@ -85,6 +89,7 @@ in {
     ];
 
     casks = [
+      "codeisland"
       "status-trio"
       "robbietilton-compositor"
       "snapzy"
