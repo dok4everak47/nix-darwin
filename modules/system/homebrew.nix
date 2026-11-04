@@ -86,6 +86,7 @@ in {
       # 64-bit full JDK >= 21。虽然 brew 会作为 ghidra 的依赖自动带入，但 cleanup=
       # uninstall 只豁免传递依赖的判定并不可靠，显式声明以固定版本线（别升到 @25）。
       "openjdk@21"
+      "dosbox-x"
     ];
 
     casks = [
