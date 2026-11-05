@@ -90,6 +90,7 @@ in {
     ];
 
     casks = [
+      "retroarch"
       "codeisland"
       "status-trio"
       "robbietilton-compositor"
