@@ -323,291 +323,6 @@ EOF
       )
     }
 
-    # nxd-install: 安装软件子菜单 (nxd 调用, 也可独立运行)。
-    #   🔍 nix: nix-search 搜索(频道=26.05, 与 flake.lock 的 nixos-26.05 匹配,
-    #      flake 升级大版本时同步改这里) → 选中 → 自动追加进 packages.nix
-    #      systemPackages 列表首行 → 询问是否立即 rebuild。
-    #   🍺 brew: 输 formula/cask 名 → brew info 自动识别类型 → brew install
-    #      → 自动追加声明进 homebrew.nix 对应列表。自定义 tap 未声明时只装
-    #      不声明(缺 tap 声明会让下次 brew bundle 报错), 由用户先声明 tap。
-    #   📝 直接编辑 packages.nix / homebrew.nix。
-    # 写文件用 awk 在列表头插入一行; 目标行格式变化时放弃并提示手动添加。
-    nxd-install() {
-      local repo="/etc/nix-darwin"
-      local sub pkg name kind tap declare_ok yn k2 tmpf install_rc added
-      while true; do
-        sub=$(printf '%s\n' \
-          "🔍 nix 安装 (搜索 + 自动声明 packages.nix)" \
-          "🍺 brew 安装 (安装 + 自动声明 homebrew.nix)" \
-          "📝 编辑 packages.nix" \
-          "📝 编辑 homebrew.nix" \
-          "⬅ 返回" \
-          | fzf --cycle --prompt="安装软件> " --reverse --height=50%) || return 0
-        case "$sub" in
-          *nix*安装*)
-            rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t /tmp/nxd-installed-attrs /tmp/nxd-selected.sh /tmp/nxd-remove.sh
-            touch /tmp/nxd-install-cart
-            awk '/environment.systemPackages = with pkgs;/{f=1;next} f&&/^[[:space:]]*\]/{exit} f&&/^[[:space:]]*\[$/{next} f&&/^[[:space:]]*#/{next} f{gsub(/^[[:space:]]+|[[:space:]]+$/,"");if($0!="")print}' "$repo/modules/system/packages.nix" > /tmp/nxd-installed-attrs
-            cat > /tmp/nxd-reload.sh <<'NXDEOF'
-#!/bin/sh
-[ -n "$FZF_QUERY" ] || exit 0
-nix-search --channel=26.05 -m 50 --json "$FZF_QUERY" 2>/dev/null \
-| jq -r '[(.package_attr_name // ""), (.package_pversion // ""), (.package_description // ""), ((.package_programs // []) | join(" ")), ((.package_homepage // []) | join(" "))] | @tsv' \
-| sort -u \
-| awk -F'\t' -v OFS='\t' '
-  BEGIN { print "包名                          版本    描述" }
-  NR==FNR { i[$0]=1; next }
-  {
-    d = sprintf("%-30s %-10s %-58s", substr($1,1,30), substr($2,1,10), substr($3,1,58))
-    if ($1 in i) print "\033[32m" d "\033[0m", $1, $2, $3, $4, $5
-    else print d, $1, $2, $3, $4, $5
-  }' /tmp/nxd-installed-attrs -
-exit 0
-NXDEOF
-            cat > /tmp/nxd-toggle.sh <<'NXDEOF'
-#!/bin/sh
-[ -n "$1" ] || exit 0
-if grep -qxF -e "$1" /tmp/nxd-install-cart 2>/dev/null; then
-  grep -vxF -e "$1" /tmp/nxd-install-cart > /tmp/nxd-install-cart.t && mv /tmp/nxd-install-cart.t /tmp/nxd-install-cart
-else
-  printf '%s\n' "$1" >> /tmp/nxd-install-cart
-fi
-NXDEOF
-            cat > /tmp/nxd-selected.sh <<'NXDEOF'
-#!/bin/sh
-# 已选应用管理: d=移除光标项(列表实时更新), Enter/Esc=返回搜索界面
-while true; do
-  [ -s /tmp/nxd-install-cart ] || { printf '\n  ✓ 已选为空 — 回搜索界面用空格添加\n'; sleep 1.5; exit 0; }
-  fzf --cycle --reverse --height=90% \
-      --border=rounded --border-label=" 已选列表 · d=移除光标项 · Enter/Esc=返回搜索 " \
-      --header="返回搜索界面后 Enter=安装全部已选" \
-      --prompt="已选> " \
-      --bind="d:execute-silent(sh /tmp/nxd-remove.sh '{1}')+reload-sync(cat /tmp/nxd-install-cart)" \
-      < /tmp/nxd-install-cart
-  break
-done
-NXDEOF
-            cat > /tmp/nxd-remove.sh <<'NXDEOF'
-#!/bin/sh
-[ -n "$1" ] || exit 0
-grep -vxF -e "$1" /tmp/nxd-install-cart > /tmp/nxd-install-cart.t 2>/dev/null && mv /tmp/nxd-install-cart.t /tmp/nxd-install-cart
-NXDEOF
-            COLORTERM=truecolor fzf --phony --query="" \
-              --prompt="nix 搜索> " \
-              --header="输入即实时搜索 · 空格 选择/取消 · ctrl-s 已选列表 · Enter 安装已选 · Esc 取消" \
-              --multi --ansi --cycle --reverse --height=90% \
-              --delimiter='\t' --with-nth=1 --header-lines=1 \
-              --border=rounded --border-label=" ⚡ nxd · nix 包搜索 " \
-              --info=inline-right \
-              --bind="space:toggle+execute-silent(sh /tmp/nxd-toggle.sh '{2}')+refresh-preview" \
-              --bind="change:reload-sync(sh /tmp/nxd-reload.sh)" \
-              --bind="ctrl-s:execute(sh /tmp/nxd-selected.sh)" \
-              --preview="printf '▸ {2}\033[1m'  {3}\n\n{4}\n\n命令: {5}\n主页: {6}\n\n── 已选 %s 个 (ctrl-s 管理界面) ──\n' \$(wc -l < /tmp/nxd-install-cart 2>/dev/null | tr -d '); cat /tmp/nxd-install-cart 2>/dev/null | sed 's/^/  ✓ /'; [ -s /tmp/nxd-install-cart ] || echo '  (空)'" \
-              --preview-window=right:45%:wrap:border-rounded --preview-label=" 详情 " \
-              >/dev/null </dev/null
-            install_rc=$?
-            if [[ "$install_rc" -ne 0 ]]; then
-              rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t /tmp/nxd-installed-attrs /tmp/nxd-selected.sh /tmp/nxd-remove.sh
-              continue
-            fi
-            added=0
-            while IFS= read -r pkg; do
-              [ -z "$pkg" ] && continue
-              if ! [[ "$pkg" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
-                echo "✖ 包名含特殊字符, 跳过: $pkg" >&2
-                continue
-              fi
-              if grep -qE "^[[:space:]]*$pkg[[:space:]]*\$" "$repo/modules/system/packages.nix"; then
-                echo "⚠ packages.nix 已有 $pkg, 跳过"
-                continue
-              fi
-              tmpf="$repo/modules/system/packages.nix.tmp"
-              awk -v pkg="      $pkg" '
-                !ins && /environment.systemPackages = with pkgs;/ {
-                  print
-                  if ((getline nxt) <= 0) exit 2
-                  print nxt
-                  if (nxt !~ /^[[:space:]]*\[[[:space:]]*$/) exit 2
-                  print pkg
-                  ins = 1
-                  next
-                }
-                { print }
-                END { if (!ins) exit 3 }
-              ' "$repo/modules/system/packages.nix" > "$tmpf" \
-                && mv "$tmpf" "$repo/modules/system/packages.nix" \
-                || { rm -f "$tmpf"; echo "✖ packages.nix 列表格式与预期不符, $pkg 未添加 (请手动)" >&2; continue; }
-              echo "✓ 已加入 packages.nix: $pkg"
-              added=$((added + 1))
-            done < /tmp/nxd-install-cart
-            rm -f /tmp/nxd-install-cart /tmp/nxd-install-cart.t /tmp/nxd-installed-attrs /tmp/nxd-selected.sh /tmp/nxd-remove.sh
-            if [[ "$added" -eq 0 ]]; then
-              echo "(没有新增声明)"
-              continue
-            fi
-            printf '立即 rebuild 生效? (y/N) '
-            read -r yn
-            [[ "$yn" == y* ]] && (cd "$repo" && sudo darwin-rebuild switch --flake .#dok4ever-mac)
-            ;;
-          *brew*安装*)
-            printf 'brew 名字 (formula 或 cask, 支持 user/tap/name)> '
-            read -r name
-            [ -z "$name" ] && continue
-            if ! [[ "$name" =~ ^[a-zA-Z0-9][a-zA-Z0-9/_.@+-]*$ ]]; then
-              echo "✖ 名字含异常字符: $name" >&2
-              continue
-            fi
-            if brew info --formula "$name" >/dev/null 2>&1; then
-              kind=formula
-              tap=$(brew info --json=v2 --formula "$name" 2>/dev/null | jq -r '.formula[0].tap // ""')
-            elif brew info --cask "$name" >/dev/null 2>&1; then
-              kind=cask
-              tap=$(brew info --json=v2 --cask "$name" 2>/dev/null | jq -r '.casks[0].tap // ""')
-            else
-              echo "✖ brew 找不到: $name (formula / cask 都没命中)" >&2
-              continue
-            fi
-            if [[ "$kind" == formula ]]; then
-              brew install "$name" || continue
-            else
-              brew install --cask "$name" || continue
-            fi
-            declare_ok=1
-            if [[ -n "$tap" && "$tap" != homebrew/* ]] && ! grep -qF "$tap" "$repo/modules/system/homebrew.nix"; then
-              echo "⚠ tap '$tap' 未在 homebrew.nix 声明 — 跳过自动声明; 请先声明 tap 并加条目, 否则下次 rebuild 会把它清掉" >&2
-              declare_ok=0
-            fi
-            if [[ "$declare_ok" == 1 ]]; then
-              if grep -qE "^[[:space:]]*\"?$name\"?[[:space:]]*\$|name = \"$name\";" "$repo/modules/system/homebrew.nix"; then
-                echo "⚠ homebrew.nix 已有 $name, 跳过声明"
-              else
-                if [[ "$kind" == cask ]]; then
-                  tmpf="$repo/modules/system/homebrew.nix.tmp"
-                  awk -v e="      \"$name\"" '
-                    !ins && /casks = \[/ { print; print e; ins = 1; next }
-                    { print }
-                    END { if (!ins) exit 3 }
-                  ' "$repo/modules/system/homebrew.nix" > "$tmpf" \
-                    && mv "$tmpf" "$repo/modules/system/homebrew.nix" \
-                    || { rm -f "$tmpf"; echo "✖ casks 列表格式异常, 请手动声明" >&2; continue; }
-                  echo "✓ 已声明进 casks: $name"
-                else
-                  tmpf="$repo/modules/system/homebrew.nix.tmp"
-                  awk -v e="      \"$name\"" '
-                    !ins && /brews = \[/ { print; print e; ins = 1; next }
-                    { print }
-                    END { if (!ins) exit 3 }
-                  ' "$repo/modules/system/homebrew.nix" > "$tmpf" \
-                    && mv "$tmpf" "$repo/modules/system/homebrew.nix" \
-                    || { rm -f "$tmpf"; echo "✖ brews 列表格式异常, 请手动声明" >&2; continue; }
-                  echo "✓ 已声明进 brews: $name"
-                fi
-              fi
-            fi
-            if [[ "$declare_ok" == 1 ]]; then
-              echo "✓ 已安装 $name ($kind); 声明已入 homebrew.nix, 下次 rebuild 自动转正"
-            else
-              echo "✖ 已安装 $name ($kind) 但未声明 — 下次 rebuild 会被 cleanup 清掉, 请尽快声明 tap + 条目"
-            fi
-            ;;
-          *packages.nix*)
-            (cd "$repo" && $EDITOR modules/system/packages.nix) ;;
-          *homebrew.nix*)
-            (cd "$repo" && $EDITOR modules/system/homebrew.nix) ;;
-          *)
-            return 0 ;;
-        esac
-        printf '\n↩ 回车返回安装菜单 / q 回主菜单> '
-        read -r k2
-        [[ "$k2" == q* ]] && return 0
-      done
-    }
-
-    # nxd: nix-darwin TUI — fzf 菜单一站式操作 /etc/nix-darwin。
-    #   $ nxd   # 菜单: 编辑(分类/全局, 分类里含安装软件) / rebuild / diff / commit&push / rollback
-    # 任何目录可用;编辑走 $EDITOR(fzf 带预览),rebuild 走 sudo(前台输密码)。
-    # 注意: 本函数体内严禁 dollar-quote(两个相邻单引号)写法, 会截断 Nix indented 字符串,
-    # 换行用 printf, tab 用 awk 双引号转义 / fzf 反斜杠t 正则。
-    nxd() {
-      local repo="/etc/nix-darwin"
-      local menu cat files file yn k
-      while true; do
-        menu=$(printf '%s\n' \
-          "📝 编辑配置 (全局搜索)" \
-          "📂 分类浏览编辑 (软件/shell/system/...)" \
-          "🔨 rebuild (switch)" \
-          "👀 查看未提交改动" \
-          "✅ commit & push" \
-          "↩️  rollback 上一代" \
-          "🚪 退出" \
-          | fzf --cycle --prompt="nix-darwin [$(git -C "$repo" branch --show-current)]> " \
-            --header="$(git -C "$repo" status -s | wc -l | tr -d ' ') 个未提交文件" \
-            --reverse --height=50%) || return 0
-        case "$menu" in
-          *全局搜索*)
-            file=$(git -C "$repo" ls-files '*.nix' \
-              | fzf --cycle --prompt="open> " --reverse --height=60% \
-                --preview="bat --color=always --style=numbers --line-range=:200 '$repo/{}'" \
-                --preview-window=right:60%:wrap) || continue
-            (cd "$repo" && $EDITOR "$file") ;;
-          *分类浏览*)
-            cat=$(printf '%s\n' \
-              "📦 安装软件 (packages / homebrew)" \
-              "🐚 shell" \
-              "⚙️ system" \
-              "🧩 programs" \
-              "🔧 fixes" \
-              "🔗 overlays" \
-              "🌳 核心 (flake / lib / AGENTS)" \
-              "⬅ 返回" \
-              | fzf --cycle --prompt="分类> " --reverse --height=50%) || continue
-            case "$cat" in
-              *安装*)
-                files=""
-                nxd-install ;;
-              *shell*)
-                files=$(git -C "$repo" ls-files 'modules/shell') ;;
-              *system*)
-                files=$(git -C "$repo" ls-files 'modules/system') ;;
-              *programs*)
-                files=$(git -C "$repo" ls-files 'modules/programs') ;;
-              *fixes*)
-                files=$(git -C "$repo" ls-files 'modules/fixes') ;;
-              *overlays*)
-                files=$(git -C "$repo" ls-files 'modules/overlays') ;;
-              *核心*)
-                files=$(printf '%s\n' "flake.nix" "modules/lib.nix" "modules/default.nix" "AGENTS.md") ;;
-              *)
-                continue ;;
-            esac
-            [ -z "$files" ] && continue
-            file=$(printf '%s\n' "$files" \
-              | awk -F/ '{print $NF "\t" $0}' \
-              | fzf --cycle --prompt="open> " --reverse --height=60% \
-                --with-nth=1 --delimiter='\t' \
-                --preview="bat --color=always --style=numbers --line-range=:200 '$repo/{2}'" \
-                --preview-window=right:60%:wrap \
-              | cut -f2) || continue
-            [ -n "$file" ] || continue
-            (cd "$repo" && $EDITOR "$file") ;;
-          *rebuild*)
-            (cd "$repo" && sudo darwin-rebuild switch --flake .#dok4ever-mac) ;;
-          *查看*)
-            git -C "$repo" --no-pager -c color.ui=always diff HEAD | less -R ;;
-          *commit*)
-            (cd "$repo" && git add -A && git commit && { git push; git push gitea HEAD; }) ;;
-          *rollback*)
-            printf '确认 rollback 到上一代? (y/N) '
-            read -r yn
-            [[ "$yn" == y* ]] && sudo darwin-rebuild switch --rollback ;;
-          *退出*) return 0 ;;
-        esac
-        printf '\n↩ 回车返回菜单 / q 退出> '
-        read -r k
-        [[ "$k" == q* ]] && return 0
-      done
-    }
-
     # ── Hermes 会话浏览/续跑: hr ────────────────────────────────────────
     # 交互式会话选择器 (上下键 + 打字过滤 + 回车续跑), 等价 codex resume 的
     # 候选列表。⚠️ 别用 `hermes resume` —— 那个子命令是解除 hermes pause
@@ -615,5 +330,45 @@ NXDEOF
     hr() {
       hermes sessions browse "$@"
     }
+
+    # ── 常用 alias（交互 shell 也要能用，非 login shell 只读 .zshrc） ──
+    alias ls=eza
+    alias ll='eza -lah --classify --sort=type'
+    alias la='eza -a'
+    alias tree='eza --tree'
+    alias ..='cd ..'
+    alias ...='cd ../..'
+    alias ....='cd ../../..'
+    alias .....='cd ../../../..'
+    alias c=clear
+    alias cls=clear
+    alias v=nvim
+    alias vi=nvim
+    alias cat=bat
+    alias em='emacs -nw'
+
+    # grep 彩色
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+
+    # git 常用
+    alias g='git'
+    alias gs='git status'
+    alias ga='git add'
+    alias gc='git commit'
+    alias gp='git push'
+    alias gl='git pull'
+    alias gd='git diff'
+    alias gco='git checkout'
+    alias gb='git branch'
+
+    # 其它常用
+    alias h='history'
+    alias j='jobs'
+
+    # nix-darwin rebuild
+    alias drs='darwin-rebuild switch'
+    alias drb='darwin-rebuild build'
   '';
 }

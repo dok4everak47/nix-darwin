@@ -1,0 +1,12 @@
+[package]
+name = "nxd"
+version = "0.1.0"
+edition = "2021"
+description = "ASCII TUI control deck for the nix-darwin config at /etc/nix-darwin"
+
+[dependencies]
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true

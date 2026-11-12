@@ -59,6 +59,10 @@
       wget
       curl
       bat
+      # nxd: /etc/nix-darwin 的 ASCII TUI（Rust，零依赖，源码在 pkgs/nxd/）。
+      # 取代原来的 zsh 函数 + fzf 菜单；安装子菜单也已内置（nix-search + brew，
+      # 见 pkgs/nxd/src/install.rs）。
+      (callPackage ../../pkgs/nxd { })
       eza
       himalaya
       neomutt

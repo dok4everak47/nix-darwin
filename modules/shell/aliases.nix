@@ -27,9 +27,34 @@
     alias ....='cd ../../..'
     alias .....='cd ../../../..'
     alias c=clear
+    alias cls=clear
     alias v=nvim
     alias vi=nvim
     alias cat=bat
     alias em='emacs -nw'
+
+    # grep 彩色
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+
+    # git 常用
+    alias g='git'
+    alias gs='git status'
+    alias ga='git add'
+    alias gc='git commit'
+    alias gp='git push'
+    alias gl='git pull'
+    alias gd='git diff'
+    alias gco='git checkout'
+    alias gb='git branch'
+
+    # 其它常用
+    alias h='history'
+    alias j='jobs'
+
+    # nix-darwin rebuild
+    alias drs='darwin-rebuild switch'
+    alias drb='darwin-rebuild build'
   '';
 }
