@@ -71,8 +71,18 @@ in {
     zstyle ':completion:*' matcher-list 'm:{a-zA-z}={A-Za-z}'
 
     # Load and run compinit first → compdef is now available for everyone
-    autoload -U compinit
-    compinit
+    #
+    # ⚡ 2026-11-13 提速: /etc/zshrc (programs.zsh.enableCompletion) 在
+    # ZDOTDIR 生效之前已经跑过一次 compinit, 这里再无条件跑一次 = 白花
+    # ~0.12s (交互启动实测 0.34s, 这笔占三分之一)。改成「本 shell 还没
+    # compinit 过才跑」:
+    #   - 正常终端: /etc/zshrc 已跑过 → 跳过, compdef 照样可用;
+    #   - /etc/zshrc 被 Apple 原版覆盖 / 不读全局 rc 时: _comps 为空
+    #     → 这里补跑, 与原行为一致。
+    if (( ! ''${+_comps} )); then
+      autoload -U compinit
+      compinit
+    fi
 
     # Load antidote plugins (fzf-tab, autosuggestions, ...). They need compdef.
     # fzf-tab wraps Tab here (fzf keybindings are already loaded above).
