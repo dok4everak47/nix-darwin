@@ -40,6 +40,16 @@
   # unstable with search patch) live in modules/overlays/.
   environment.systemPackages = with pkgs;
     [
+      superfile
+      # spf → superfile（PATH 级，2026-11-13）
+      # 上游 1.3.x 起命令名改为 superfile（发布物 superfile-<os>-<ver>，nixpkgs
+      # meta.mainProgram = "superfile"），只提供 bin/superfile；旧文档/肌肉记忆里的
+      # `spf` 因此变成 command not found。这里补回 spf 这个名字。
+      # 用 runCommand 单独建包：本体会提供 bin/superfile，直接在同 buildEnv 里 ln 会碰撞。
+      (runCommand "spf-is-superfile" { } ''
+        mkdir -p $out/bin
+        ln -s ${superfile}/bin/superfile $out/bin/spf
+      '')
       visidata
       helix
       neovim

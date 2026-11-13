@@ -333,6 +333,15 @@
       opencode = nixos-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.opencode;
     })
 
+    # ── superfile: nixos-unstable 1.6.0 (2026-11-13) ───────────────────
+    # 26.05 stable 只到 1.3.3（1.3.x 起上游把命令名 spf 改成 superfile，
+    # packages.nix 里那个 spf-is-superfile 符号链接就是为它补的）。
+    # nixos-unstable 已跟进 1.6.0，直接用滚动 input 的版本；26.05 追上来后
+    # 删掉这段（对照 nitter / opencode 的写法）。
+    (final: prev: {
+      superfile = nixos-unstable.legacyPackages.${prev.stdenv.hostPlatform.system}.superfile;
+    })
+
     # ── zed-editor: nixpkgs-unstable 1.22.0 (2026-10-06) ───────────────
     # 26.05 stable 的 zed-editor 是 1.3.6, nixos-unstable 也只到 1.21.0,
     # 上游当前 stable 是 1.22.0 → 用专用的 zed-nixpkgs input 覆盖。
