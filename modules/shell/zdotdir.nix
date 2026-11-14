@@ -57,13 +57,22 @@ in {
       # 交互配置总入口: /etc/zshenv 设 ZDOTDIR 指向本目录 (nix store 只读)。
       # macOS 更新盖 /etc/zshrc 也无碍 —— 配置从这里读。
 
-      # ── history / keymap 基座 ──
+      # ── history / 编辑基座 ──
       # (programs.zsh 基座写在 /etc/zshrc; 该文件被盖成 Apple 原版时缺这些
       #  setopt, 这里兜底。正常状态重复赋同一值, 无副作用。)
-      SAVEHIST=2000
-      HISTSIZE=2000
+      # 2000 → 50000: atuin 只接管 Ctrl+R, 上下键和跨 shell 仍读这个文件。
+      SAVEHIST=50000
+      HISTSIZE=50000
       HISTFILE=$HOME/.zsh_history
-      setopt HIST_IGNORE_DUPS SHARE_HISTORY HIST_FCNTL_LOCK
+      # HIST_IGNORE_SPACE: 命令前加空格 = 不记入 ~/.zsh_history (临时带密钥的
+      #   命令); atuin 那边靠 ~/.config/atuin/config.toml 的 history_filter 兜。
+      # HIST_SAVE_NO_DUPS + HIST_REDUCE_BLANKS: 历史文件不重复、不留多余空白。
+      setopt HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_REDUCE_BLANKS HIST_SAVE_NO_DUPS SHARE_HISTORY HIST_FCNTL_LOCK
+      # 不吞 Ctrl+S (默认 flow_control 会把终端冻住, 再按 Ctrl+Q 才解)。
+      unsetopt flow_control
+      # ESC 序列超时 0.4s → 0.1s。zvm 首次 prompt 会用 ZVM_KEYTIMEOUT 覆盖,
+      # 真正的旋钮在 plugins.nix 的 after-init 段。
+      KEYTIMEOUT=10
       bindkey -e
 
       # ══ 项目函数 (functions.nix) + 插件链 (plugins.nix) ══

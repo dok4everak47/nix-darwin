@@ -53,6 +53,18 @@ in {
     # sourced (see the note after the bundle).
     source ${pkgs.fzf}/share/fzf/key-bindings.zsh
 
+    # ── Alt-C: 浏览式 cd (fzf --walker=dir) ───────────────────────────
+    # fzf 0.72 自带的 fzf-cd-widget 本身就用 `--walker=dir,follow,hidden` 直接
+    # 扫盘, 不走 zsh 的 _path_files —— 大目录(几万条)不会先卡在候选生成上。
+    # 补它默认没有的三件事:
+    #   --walker-skip  跳过噪音目录(默认只跳 .git,node_modules, 不够);
+    #   --preview      选中目录就列出内容;
+    #   --height=60%   内联在命令流里, 不开全屏 alt-screen。
+    # 注意: 值里不能放带空格的路径(Application Support 之类), fzf 按逗号切分。
+    # TermiNai 的 Option 是组合键(option_as_alt 不生效), Alt-C 送不到这里;
+    # 实际入口是 zvm after-init 里的 Ctrl+G / ç, 这项留给真实 Meta 终端。
+    export FZF_ALT_C_OPTS="--height=60% --walker-skip=.git,node_modules,.direnv,target,dist,Library/Caches,Pods,.venv --preview 'eza -1 --group-directories-first --color=always {}' --bind=ctrl-/:toggle-preview"
+
     # Rebuild the plugin bundle if it is stale/missing. Generate into a temp
     # file and atomically move it into place: a bare `> ~/.zsh_plugins.zsh`
     # truncates the target BEFORE the command runs, so if `antidote bundle`
@@ -69,6 +81,18 @@ in {
     # ── Completion: case-insensitive (fzf-tab) ───────────────────
     # zsh 默认补全大小写敏感；这里让小写也能匹配大写(cd doc → Documents)
     zstyle ':completion:*' matcher-list 'm:{a-zA-z}={A-Za-z}'
+
+    # ── cd 补全体验 (fzf-tab) ─────────────────────────────────────────
+    # accept-exact-dirs: `cd ~/Proj` 命中同名目录即接受, 不再展开它的内容;
+    # list-dirs-first:   候选列表里目录排在文件前面, 找 cd 目标不用翻页。
+    zstyle ':completion:*' accept-exact-dirs true
+    zstyle ':completion:*' list-dirs-first true
+    # --height=60%: 内联显示, 不开全屏 alt-screen;
+    # --select-1:   只剩一个候选时跳过界面直接采用;
+    # Ctrl-/ 手动开关预览。
+    zstyle ':fzf-tab:*' fzf-flags --height=60% --select-1 --bind=ctrl-/:toggle-preview
+    # cd 候选右侧预览目录内容(eza 由 nix 安装), 选错目录的概率直接归零。
+    zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --group-directories-first --color=always $realpath'
 
     # Load and run compinit first → compdef is now available for everyone
     #
@@ -94,22 +118,37 @@ in {
     # double-register precmd/preexec hooks). Replaces starship (see
     # modules/shell/default.nix).
 
-    # ── zsh-vi-mode: re-apply fzf bindings clobbered by zvm init ─────
-    # zsh-vi-mode defers init to the first prompt (precmd_functions+=zvm_init,
-    # verified in source) and then OVERWRITES all prior keybindings — which
-    # kills the fzf ^T/^R/Alt-C bindings sourced before the bundle above.
-    # README's official fix: re-source them from the after-init hook.
-    # Safe for fzf-tab: key-bindings.zsh only binds ^T/\ec/^R, never Tab.
-    # (zvm declares these arrays without resetting them at source time, so
-    # appending here — after the bundle — is the documented pattern.)
+    # ── zsh-vi-mode: after-init 是唯一能改键位的地方 ────────────────
+    # zvm 把 init 推迟到首个 prompt (precmd_functions+=zvm_init), 执行
+    # `bindkey -v` 重建 viins/vicmd —— rc 阶段绑的键全被清掉 (fzf 的
+    # ^T/^R/\ec 就是这样丢的), 所以自定义键位必须挂在这个钩子里。
+    #
+    # KEYTIMEOUT: zvm 在 init 时按 ZVM_KEYTIMEOUT 重算 KEYTIMEOUT, 写在
+    # rc 里的值会被它覆盖; 0.4s → 0.1s 让 ESC 进普通模式不再迟滞。
+    ZVM_KEYTIMEOUT=0.1
+
+    # fzf 键位先恢复 (^T 文件、^R 历史), 后面 atuin 再把 ^R 抢回来。
     zvm_after_init_commands+=('source ${pkgs.fzf}/share/fzf/key-bindings.zsh')
 
-    # insert 模式连按 jk 代替 ESC —— 2026-09-20 移除。
-    # 它让每个 lone-j 都要等 ZVM_KEYTIMEOUT(默认 0.4s) 判断是否按 k，
-    # 是「Ghostty 里输入 j 有延迟」的根因（zvm readkey 引擎接管 "j"，
-    # pty 实测回显 ~0.4s+；绑定走插件内部引擎，bindkey dump 看不到）。
-    # 退出插入模式改按 ESC。若想恢复，加回下行并同时调低 ZVM_KEYTIMEOUT(如 0.1)：
-    #   ZVM_VI_INSERT_ESCAPE_BINDKEY=jk
+    # atuin 的 ^R 死因: rc 阶段绑在 viins 的 ^r (在 zvm 之前), 先被
+    # `bindkey -v` 清掉, 又被上面 fzf 的 ^R 抢走 → Ctrl+R 实际是
+    # fzf-history-widget。atuin 是选定的历史后端, 这里最后绑一次, Ctrl+R
+    # 才真正进 atuin 搜索。↑ 保留 zsh 原生历史(更轻); 想要 atuin 版就
+    # 再补一行 ^[[A / ^[OA → atuin-up-search-viins。
+    zvm_after_init_commands+=('bindkey -M viins "^R" atuin-search-viins')
+
+    # Ctrl+G / Option+C(ç): 浏览式 cd (fzf --walker=dir + eza 预览)。
+    # fzf 自带入口是 \ec, 但 TermiNai 不送 Meta, Option+C 实际发出 ç;
+    # 直接绑这个字符就绕过了终端的 option_as_alt 限制。^G 原本是
+    # send-break, 被占用后中断仍可用 Ctrl+C。
+    zvm_after_init_commands+=('bindkey -M viins "^G" fzf-cd-widget; bindkey -M viins "ç" fzf-cd-widget')
+
+    # 编辑器键位补洞: zsh 默认和 zvm 的 viins 都没绑这些, 实测 undefined-key。
+    # Ctrl/Alt + ←/→ 跳词, Ctrl+Delete 删词, Shift+Tab 反向菜单。
+    zvm_after_init_commands+=('bindkey -M viins "^[[1;5C" forward-word; bindkey -M viins "^[[1;3C" forward-word; bindkey -M viins "^[[1;5D" backward-word; bindkey -M viins "^[[1;3D" backward-word; bindkey -M viins "^[[3;5~" kill-word; bindkey -M viins "^[[Z" reverse-menu-complete')
+
+    # insert 模式连按 jk 代替 ESC —— 2026-09-20 移除 (每个 lone-j 都要等
+    # ZVM_KEYTIMEOUT 判断是否按 k)。退出插入模式用 ESC。
 
     # bun completions
     [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
